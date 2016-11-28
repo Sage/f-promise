@@ -1,0 +1,40 @@
+{
+  "name": "f-promise",
+  "version": "1.0.0",
+  "license": "MIT",
+  "description": "Promise-oriented coroutines for node.js",
+  "author": {
+    "name": "Bruno Jouhier",
+    "email": "bruno.jouhier@sage.com"
+  },
+  "engines": {
+    "node": ">=4.0.0"
+  },
+  "dependencies": {
+    "streamline-runtime": "^1.0.37"
+  },
+  "devDependencies": {
+    "@types/chai": "^3.4.34",
+    "@types/mocha": "^2.2.33",
+    "@types/mz": "0.0.30",
+    "@types/node": "^6.0.51",
+    "chai": "^3.5.0",
+    "mocha": "^3.2.0",
+    "mz": "^2.6.0",
+    "streamline": "^2.0.13"
+  },
+  "keywords": [
+    "fibers",
+    "coroutine",
+    "async",
+    "promise"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/Sage/f-promise.git"
+  },
+  "scripts": {
+    "prepublish": "node_modules/streamline/bin/_node --runtime fibers -c index.ts src test examples/disk-usage.ts && node node_modules/typescript/bin/tsc --target ES2015 --module commonjs examples/disk-usage-async-await.ts",
+    "test": "node_modules/mocha/bin/mocha test"
+  }
+}
