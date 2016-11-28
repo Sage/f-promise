@@ -21,7 +21,8 @@
     "chai": "^3.5.0",
     "mocha": "^3.2.0",
     "mz": "^2.6.0",
-    "streamline": "^2.0.13"
+    "streamline": "^2.0.13",
+    "typescript": "^2.0.10"
   },
   "keywords": [
     "fibers",
