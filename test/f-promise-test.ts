@@ -1,7 +1,10 @@
+/// <reference path="../node_modules/streamline-node/index.d.ts" />
+import { _ } from 'streamline-runtime';
 import { assert } from 'chai';
-import * as fs from 'mz/fs';
+import * as fs from 'fs';
+import * as mzfs from 'mz/fs';
 import * as fsp from 'path';
-import { wait, run, withContext, context, Queue } from '..';
+import { wait, wait_, run, withContext, context, Queue } from '..';
 
 const { ok, equal, deepEqual, strictEqual, typeOf } = assert;
 
@@ -19,14 +22,48 @@ function delay<T>(val: T, millis?: number) {
     })
 }
 describe(module.id, () => {
-    it('basic tests', (done) => {
+    it('promise wait', (done) => {
         const p = run(() => {
-            const fname = fsp.join(__dirname, 'f-promise-test.ts');
-            const text = wait(fs.readFile(fname, 'utf8'));
+            const fname = fsp.join(__dirname, '../../test/f-promise-test.ts');
+            const text = wait(mzfs.readFile(fname, 'utf8'));
             typeOf(text, 'string');
             ok(text.length > 200);
-            ok(text.indexOf('import') === 0);
-            const text2 = wait(fs.readFile(fname, 'utf8'));
+            ok(text.indexOf('/// <reference ') === 0);
+            const text2 = wait(mzfs.readFile(fname, 'utf8'));
+            equal(text, text2);
+            return 'success';
+        });
+        p.then(result => {
+            equal(result, 'success');
+            done();
+        }, err => done(err));
+    });
+
+    it('callback wait', (done) => {
+        const p = run(() => {
+            const fname = fsp.join(__dirname, '../../test/f-promise-test.ts');
+            const text = wait<string>(cb => fs.readFile(fname, 'utf8', cb));
+            typeOf(text, 'string');
+            ok(text.length > 200);
+            ok(text.indexOf('/// <reference ') === 0);
+            const text2 = wait<string>(cb => fs.readFile(fname, 'utf8', cb));
+            equal(text, text2);
+            return 'success';
+        });
+        p.then(result => {
+            equal(result, 'success');
+            done();
+        }, err => done(err));
+    });
+
+    it('streamline wait', (done) => {
+        const p = run(() => {
+            const fname = fsp.join(__dirname, '../../test/f-promise-test.ts');
+            const text = wait_(_ => fs.readFile(fname, 'utf8', _));
+            typeOf(text, 'string');
+            ok(text.length > 200);
+            ok(text.indexOf('/// <reference ') === 0);
+            const text2 = wait_<string>(_ => fs.readFile(fname, 'utf8', _));
             equal(text, text2);
             return 'success';
         });
@@ -78,7 +115,7 @@ describe(module.id, () => {
         strictEqual(queue.length, 4);
         strictEqual(queue.peek(), 4);
         deepEqual(queue.contents(), [4, 9, 16, 25]);
-        queue.adjust(function (arr) {
+        queue.adjust(function(arr) {
             return [arr[3], arr[1]];
         });
         strictEqual(queue.peek(), 25);

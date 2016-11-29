@@ -180,3 +180,10 @@ export function withContext<T>(fn: () => T, cx: any) {
 export function context() {
     return _.context;
 };
+
+// wait variant for streamline.js
+export function wait_<T>(arg: (_: _) => T): T {
+    const fiberized = (arg as any)['fiberized-0'];
+    return fiberized(true);
+}
+
