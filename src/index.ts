@@ -64,14 +64,14 @@ export function handshake<T>() {
         wait() {
             return wait<T>((cb: Callback<T>) => {
                 if (callback) throw new Error("already waiting");
-                if (notified) exports.setImmediate(cb);
+                if (notified) setImmediate(cb);
                 else callback = cb;
                 notified = false;
             })
         },
         notify() {
             if (!callback) notified = true;
-            else exports.setImmediate(callback);
+            else setImmediate(callback);
             callback = undefined;
         },
     };
