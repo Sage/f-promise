@@ -1,1 +1,1 @@
-export { wait, run } from './src';
+export * from './src';
