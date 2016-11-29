@@ -1,7 +1,7 @@
 import * as fs from 'mz/fs';
 import { join } from 'path';
 
-async function diskUsage(dir) {
+async function diskUsage(dir: string) {
     var size = 0;
     for (var name of await fs.readdir(dir)) {
         const sub = join(dir, name);
@@ -12,9 +12,9 @@ async function diskUsage(dir) {
     return size;
 }
 
-async function printDiskUsage(dir) {
+async function printDiskUsage(dir: string) {
     console.log(`${dir}: ${await diskUsage(dir)}`);
 }
 
 printDiskUsage(process.cwd())
-    .then(() => {}, err => { throw err; });
+    .then(() => { }, err => { throw err; });

@@ -48,7 +48,7 @@ export function run<T>(fn: () => T): Promise<T> {
 export function funnel<T>(n: number): (fn: () => T) => T;
 export function funnel<T>(n: number): (fn: () => T | undefined) => T | undefined {
     var fun = _.funnel<T>(n);
-    return (fn) => wait((_: _) => fun(_, _ => fn()));
+    return (fn) => wait<T>(_ => fun(_ as any, (_: _) => fn()));
 }
 
 /// ## handshake and queue
@@ -90,7 +90,7 @@ export class Queue<T> {
     _callback: Callback<T> | undefined;
     _err: any;
     _q: (T | undefined)[] = [];
-    _pendingWrites: [Callback<T>, T][] = [];
+    _pendingWrites: [Callback<T>, T | undefined][] = [];
     constructor(options?: QueueOptions | number) {
         if (typeof options === 'number') options = {
             max: options,
@@ -120,7 +120,7 @@ export class Queue<T> {
         })
     }
     ///   `q.write(data)`:  queues an item. Waits if the queue is full.  
-    write(item: T) {
+    write(item: T | undefined) {
         return wait<T>((cb: Callback<T>) => {
             if (this.put(item)) {
                 setImmediate(() => {
