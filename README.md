@@ -18,7 +18,7 @@ Constraint: `wait` may only be called from a coroutine (a function which is exec
 ## Simple example
 
 ```js
-import { wait, run } from '..';
+import { wait, run } from 'f-promise';
 import * as fs from 'mz/fs';
 import { join } from 'path';
 
@@ -89,6 +89,67 @@ they are _normal_ JavaScript functions. `async/await` keywords don't invade the 
 ## TypeScript support
 
 TypeScript is fully supported.
+
+## Control Flow utilities
+ 
+### funnel
+
+* `fun = fpromise.funnel(max)`  
+  limits the number of concurrent executions of a given code block.
+
+The `funnel` function is typically used with the following pattern:
+
+``` javascript
+import { funnel } from 'f-promise';
+
+// somewhere
+var myFunnel = funnel(10); // create a funnel that only allows 10 concurrent executions.
+
+// elsewhere
+myFunnel(() => { /* code with at most 10 concurrent executions */ });
+```
+
+The `funnel` function can also be used to implement critical sections. Just set funnel's `max` parameter to 1.
+
+If `max` is set to 0, a default number of parallel executions is allowed. 
+This default number can be read and set via `funnel.defaultSize`.  
+If `max` is negative, the funnel does not limit the level of parallelism.
+
+The funnel can be closed with `fun.close()`.  
+When a funnel is closed, the operations that are still in the funnel will continue but their callbacks
+won't be called, and no other operation will enter the funnel.
+
+### handshake and queue
+
+* `hs = fpromise.handshake()`  
+  allocates a simple semaphore that can be used to do simple handshakes between two tasks.  
+  The returned handshake object has two methods:  
+  `hs.wait()`: waits until `hs` is notified.  
+  `hs.notify()`: notifies `hs` (without waiting for an acknowledgement)
+  Note: `wait` calls are not queued. An exception is thrown if wait is called while another `wait` is pending.
+* `q = fpromise.queue(options)`  
+  allocates a queue which may be used to send data asynchronously between two tasks.  
+  The `max` option can be set to control the maximum queue length.  
+  When `max` has been reached `q.put(data)` discards data and returns false.
+  The returned queue has the following methods:  
+  `data = q.read()`: dequeues an item from the queue. Waits if no element is available.  
+  `q.write(data)`:  queues an item. Waits if the queue is full.  
+  `ok = q.put(data)`: queues an item synchronously. Returns true if the queue accepted it, false otherwise. 
+  `q.end()`: ends the queue. This is the synchronous equivalent of `q.write(undefined)`  
+  `data = q.peek()`: returns the first item, without dequeuing it. Returns `undefined` if the queue is empty.  
+  `array = q.contents()`: returns a copy of the queue's contents.  
+  `q.adjust(fn[, thisObj])`: adjusts the contents of the queue by calling `newContents = fn(oldContents)`.  
+  `q.length`: number of items currently in the queue.  
+
+### CLS (Continuation Local Storage)
+
+* `cx = fpromise.context()`  
+  returns the current context.
+
+* `fn = fpromise.withContext(fn, cx)`  
+  wraps a function so that it executes with context `cx` (or a wrapper around current context if `cx` is falsy).
+  The previous context will be restored when the function returns (or throws).  
+  returns the wrapped function.
 
 ## License
 
