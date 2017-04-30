@@ -20,6 +20,12 @@ export function run<T>(fn: () => T): Promise<T> {
     return _.promise((_: _) => fn());
 }
 
+export function map(collection: any [], fn: Function) {
+    return collection.map((item) => {
+        return run(() => fn(item));
+    }).map(wait)
+}
+
 // goodies
 
 /// ## funnel
@@ -186,4 +192,3 @@ export function wait_<T>(arg: (_: _) => T): T {
     const fiberized = (arg as any)['fiberized-0'];
     return fiberized(true);
 }
-
