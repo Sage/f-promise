@@ -1,6 +1,6 @@
 {
   "name": "f-promise",
-  "version": "1.0.4",
+  "version": "1.1.0",
   "license": "MIT",
   "description": "Promise-oriented coroutines for node.js",
   "author": {
