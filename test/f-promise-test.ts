@@ -4,7 +4,7 @@ import { assert } from 'chai';
 import * as fs from 'fs';
 import * as mzfs from 'mz/fs';
 import * as fsp from 'path';
-import { wait, wait_, run, withContext, context, Queue } from '..';
+import { wait, wait_, run, withContext, context, Queue, map } from '..';
 
 const { ok, equal, deepEqual, strictEqual, typeOf } = assert;
 
@@ -123,5 +123,17 @@ describe(module.id, () => {
         strictEqual(queue.peek(), 9);
         strictEqual(queue.read(), 9);
         strictEqual(queue.peek(), undefined);
+    });
+
+    describe('collection functions', () => {
+        it('map', (done) => {
+            run(() => {
+                deepEqual(map([2, 5], delay), [2, 5]);
+                return 'success';
+            }).then(result => {
+                equal(result, 'success');
+                done();
+            }, err => done(err));
+        });
     });
 });
