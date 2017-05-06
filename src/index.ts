@@ -20,7 +20,7 @@ export function run<T>(fn: () => T): Promise<T> {
     return _.promise((_: _) => fn());
 }
 
-export function map(collection: any [], fn: Function) {
+export function map<T, R>(collection: T[], fn: (val: T) => R) {
     return collection.map((item) => {
         return run(() => fn(item));
     }).map(wait)

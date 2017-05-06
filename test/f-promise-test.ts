@@ -1,12 +1,12 @@
 /// <reference path="../node_modules/streamline-node/index.d.ts" />
-import {_} from 'streamline-runtime';
-import {assert} from 'chai';
+import { _ } from 'streamline-runtime';
+import { assert } from 'chai';
 import * as fs from 'fs';
 import * as mzfs from 'mz/fs';
 import * as fsp from 'path';
-import {wait, wait_, run, withContext, context, Queue, map} from '..';
+import { wait, wait_, run, withContext, context, Queue, map } from '..';
 
-const {ok, equal, deepEqual, strictEqual, typeOf} = assert;
+const { ok, equal, deepEqual, strictEqual, typeOf } = assert;
 
 function test(name: string, fn: () => void) {
     it(name, (done) => {
@@ -115,7 +115,7 @@ describe(module.id, () => {
         strictEqual(queue.length, 4);
         strictEqual(queue.peek(), 4);
         deepEqual(queue.contents(), [4, 9, 16, 25]);
-        queue.adjust(function (arr) {
+        queue.adjust(function(arr) {
             return [arr[3], arr[1]];
         });
         strictEqual(queue.peek(), 25);
@@ -125,20 +125,10 @@ describe(module.id, () => {
         strictEqual(queue.peek(), undefined);
     });
 
-    describe('collection functions', (done) => {
-        it('map', () => {
+    describe('collection functions', () => {
+        it('map', (done) => {
             run(() => {
-                const fn = (encoding) => {
-                    const fname = fsp.join(__dirname, '../../test/f-promise-test.ts');
-                    const length = wait(mzfs.readFile(fname, encoding)).length;
-                    return length;
-                };
-
-                const lengthsExpected = [() => fn('utf8'), () => fn('hex')].map(run).map(wait);
-                const lengths = map(['utf8', 'hex'], fn);
-                strictEqual(lengthsExpected[0] , lengths[0]);
-                strictEqual(lengthsExpected[1], lengths[1]);
-
+                deepEqual(map([2, 5], delay), [2, 5]);
                 return 'success';
             }).then(result => {
                 equal(result, 'success');
