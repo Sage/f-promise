@@ -3,7 +3,7 @@
         "module": "commonjs",
         "moduleResolution": "node",
         "target": "es2015",
-        "outDir": "out",
+        "outDir": "build",
         "sourceMap": true,
         "noImplicitAny": true,
         "noImplicitThis": true,

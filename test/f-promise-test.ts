@@ -4,9 +4,9 @@ import { assert } from 'chai';
 import * as fs from 'fs';
 import * as mzfs from 'mz/fs';
 import * as fsp from 'path';
-import { wait, wait_, run, withContext, context, Queue, map } from '..';
+import { wait, wait_, run, withContext, context, Queue, map, canWait, eventHandler } from '..';
 
-const { ok, equal, deepEqual, strictEqual, typeOf } = assert;
+const { ok, notOk, equal, deepEqual, strictEqual, typeOf } = assert;
 
 function test(name: string, fn: () => void) {
     it(name, (done) => {
@@ -115,7 +115,7 @@ describe(module.id, () => {
         strictEqual(queue.length, 4);
         strictEqual(queue.peek(), 4);
         deepEqual(queue.contents(), [4, 9, 16, 25]);
-        queue.adjust(function(arr) {
+        queue.adjust(function (arr) {
             return [arr[3], arr[1]];
         });
         strictEqual(queue.peek(), 25);
@@ -135,5 +135,59 @@ describe(module.id, () => {
                 done();
             }, err => done(err));
         });
+    });
+
+    describe('canWait', () => {
+        it('true inside run', (done) => {
+            run(() => {
+                ok(canWait())
+                return 'success';
+            }).then(result => {
+                equal(result, 'success');
+                done();
+            }, err => done(err));
+        });
+        it('false outside run', () => {
+            notOk(canWait());
+        });
+    });
+
+    describe('eventHandler', () => {
+        it('can wait with it', (done) => {
+            setTimeout(eventHandler(() => {
+                ok(canWait());
+                done();
+            }), 0);
+        });
+        it('cannot wait without', (done) => {
+            setTimeout(() => {
+                notOk(canWait());
+                done();
+            }, 0);
+        });
+        it('outside run', (done) => {
+            notOk(canWait());
+            let sync = true;
+            eventHandler((arg: string) => {
+                equal(arg, "hello", 'arg ok');
+                wait(cb => setTimeout(cb, 0));
+                equal(sync, false, 'new fiber');
+                done();
+            })("hello");
+            sync = false;
+        })
+        it('inside run', (done) => {
+            run(() => {
+                let sync = true;
+                ok(canWait());
+                eventHandler((arg: string) => {
+                    equal(arg, "hello", 'arg ok');
+                    wait(cb => setTimeout(cb, 0));
+                    equal(sync, true, 'same fiber as run');
+                    done();
+                })("hello");
+                sync = false;
+            });
+        })
     });
 });

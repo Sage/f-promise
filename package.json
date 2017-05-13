@@ -12,10 +12,12 @@
     "node": ">=4.0.0"
   },
   "dependencies": {
+    "fibers": "^1.0.15",
     "streamline-runtime": "^1.0.37"
   },
   "devDependencies": {
     "@types/chai": "^3.4.34",
+    "@types/fibers": "0.0.29",
     "@types/mocha": "^2.2.33",
     "@types/mz": "0.0.30",
     "@types/node": "^6.0.51",

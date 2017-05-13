@@ -2,7 +2,7 @@
     "editor.formatOnSave": true,
     "typescript.tsdk": "./node_modules/typescript/lib",
     "files.exclude": {
-        "**/node_modules/**": true, // this is a default value
-        "**/out/**": true // this is a default value
+        "node_modules": true,
+        "build": true
     }
 }

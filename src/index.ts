@@ -1,5 +1,6 @@
 // Very thin implementation. Streamline.js does all the work.
 import { _ } from 'streamline-runtime';
+const Fibers = require('fibers');
 
 export type Callback<T> = (err: any, result?: T) => void;
 export type Thunk<T> = (cb: Callback<T>) => void;
@@ -57,6 +58,7 @@ export function funnel<T>(n: number): (fn: () => T | undefined) => T | undefined
     return (fn) => wait<T>(_ => fun(_ as any, (_: _) => fn()));
 }
 
+/// 
 /// ## handshake and queue
 /// * `hs = handshake()`  
 ///   allocates a simple semaphore that can be used to do simple handshakes between two tasks.  
@@ -173,6 +175,7 @@ export class Queue<T> {
     get length() { return this._q.length; }
 }
 
+/// 
 /// ## Continuation local storage (CLS)
 /// 
 /// * `result = withContext(fn, cx)`  
@@ -191,4 +194,25 @@ export function context() {
 export function wait_<T>(arg: (_: _) => T): T {
     const fiberized = (arg as any)['fiberized-0'];
     return fiberized(true);
+}
+
+/// 
+/// ## Miscellaneous
+/// 
+/// * `ok = canWait()`  
+///   returns whether `wait` calls are allowed (whether we are called from a `run`).
+export function canWait() {
+    return !!Fibers.current;
+}
+
+/// 
+/// * `wrapped = eventHandler(handler)`  
+///   wraps `handler` so that it can call `wait`.  
+///   the wrapped handler will excute on the current fiber if canWait() is true.
+///   otherwise it will be `run` on a new fiber (without waiting for its completion)  
+export function eventHandler<T extends Function>(handler: T): T {
+    return function (this: any, ...args: any[]) {
+        if (canWait()) handler.apply(this, args);
+        else run(() => handler.apply(this, args)).catch(err => { throw err });
+    } as any;
 }
