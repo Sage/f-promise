@@ -175,7 +175,7 @@ describe(module.id, () => {
                 done();
             })("hello");
             sync = false;
-        })
+        });
         it('inside run', (done) => {
             run(() => {
                 let sync = true;
@@ -188,6 +188,10 @@ describe(module.id, () => {
                 })("hello");
                 sync = false;
             });
-        })
+        });
+        it('preserves arity', () => {
+            equal(eventHandler(() => { }).length, 0);
+            equal(eventHandler((a: any, b: any) => { }).length, 2);
+        });
     });
 });

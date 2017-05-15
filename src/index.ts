@@ -211,8 +211,11 @@ export function canWait() {
 ///   the wrapped handler will excute on the current fiber if canWait() is true.
 ///   otherwise it will be `run` on a new fiber (without waiting for its completion)  
 export function eventHandler<T extends Function>(handler: T): T {
-    return function (this: any, ...args: any[]) {
+    const wrapped = function (this: any, ...args: any[]) {
         if (canWait()) handler.apply(this, args);
         else run(() => handler.apply(this, args)).catch(err => { throw err });
     } as any;
+    // preserve arity
+    Object.defineProperty(wrapped, 'length', { value: handler.length });
+    return wrapped;
 }
