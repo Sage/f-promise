@@ -213,7 +213,7 @@ export function canWait() {
 export function eventHandler<T extends Function>(handler: T): T {
     const wrapped = function (this: any, ...args: any[]) {
         if (canWait()) handler.apply(this, args);
-        else run(() => handler.apply(this, args)).catch(err => { throw err });
+        else run(() => withContext(() => handler.apply(this, args), {})).catch(err => { throw err });
     } as any;
     // preserve arity
     Object.defineProperty(wrapped, 'length', { value: handler.length });

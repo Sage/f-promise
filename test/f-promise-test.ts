@@ -6,7 +6,7 @@ import * as mzfs from 'mz/fs';
 import * as fsp from 'path';
 import { wait, wait_, run, withContext, context, Queue, map, canWait, eventHandler } from '..';
 
-const { ok, notOk, equal, deepEqual, strictEqual, typeOf } = assert;
+const { ok, notOk, equal, notEqual, deepEqual, strictEqual, typeOf } = assert;
 
 function test(name: string, fn: () => void) {
     it(name, (done) => {
@@ -192,6 +192,26 @@ describe(module.id, () => {
         it('preserves arity', () => {
             equal(eventHandler(() => { }).length, 0);
             equal(eventHandler((a: any, b: any) => { }).length, 2);
+        });
+        it('starts with a fresh context if outside run', (done) => {
+            const cx = context();
+            ok(!canWait());
+            eventHandler(() => {
+                notEqual(context(), cx);
+                done();
+            })();
+        });
+        it('preserves context if already inside run', (done) => {
+            run(() => {
+                ok(canWait());
+                const cx = {};
+                withContext(() => {
+                    eventHandler(() => {
+                        equal(context(), cx);
+                        done();
+                    })();
+                }, cx);
+            });
         });
     });
 });
