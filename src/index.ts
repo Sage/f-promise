@@ -183,6 +183,7 @@ export class Queue<T> {
 ///   The previous context will be restored when the function returns (or throws).  
 ///   returns the wrapped function.
 export function withContext<T>(fn: () => T, cx: any) {
+    if (!Fibers.current) throw new Error('withContext(fn) not allowed outside run()');
     return _.withContext(fn, cx)();
 };
 

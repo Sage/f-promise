@@ -6,7 +6,7 @@ import * as mzfs from 'mz/fs';
 import * as fsp from 'path';
 import { wait, wait_, run, withContext, context, Queue, map, canWait, eventHandler } from '..';
 
-const { ok, notOk, equal, notEqual, deepEqual, strictEqual, typeOf } = assert;
+const { ok, notOk, equal, notEqual, deepEqual, strictEqual, typeOf, isNull, isNotNull, isUndefined, isObject } = assert;
 
 function test(name: string, fn: () => void) {
     it(name, (done) => {
@@ -21,7 +21,8 @@ function delay<T>(val: T, millis?: number) {
         }, millis || 0);
     })
 }
-describe(module.id, () => {
+
+describe('wait', () => {
     it('promise wait', (done) => {
         const p = run(() => {
             const fname = fsp.join(__dirname, '../../test/f-promise-test.ts');
@@ -72,20 +73,9 @@ describe(module.id, () => {
             done();
         }, err => done(err));
     });
+});
 
-    test("contexts", () => {
-        function testContext(x: number) {
-            return withContext(() => {
-                var y = delay(2 * x);
-                strictEqual(y, 2 * context());
-                return y + 1;
-            }, x)
-        }
-
-        var promises = [run(() => testContext(3)), run(() => testContext(5))];
-        deepEqual(promises.map(wait), [7, 11]);
-    })
-
+describe('queue', () => {
     test("queue overflow", () => {
         var queue = new Queue(2);
         // must produce and consume in parallel to avoid deadlock
@@ -124,94 +114,128 @@ describe(module.id, () => {
         strictEqual(queue.read(), 9);
         strictEqual(queue.peek(), undefined);
     });
+});
 
-    describe('collection functions', () => {
-        it('map', (done) => {
-            run(() => {
-                deepEqual(map([2, 5], delay), [2, 5]);
-                return 'success';
-            }).then(result => {
-                equal(result, 'success');
-                done();
-            }, err => done(err));
-        });
+describe('contexts', () => {
+    const mainCx = context();
+    it('is main at top level', () => {
+        equal(context(), mainCx);
+    });
+    it('is main inside run', (done) => {
+        run(() => {
+            equal(context(), mainCx);
+        }).then(done, done);
+    });
+    it('is scoped inside withContext', (done) => {
+        const cx = {};
+        run(() => {
+            equal(context(), mainCx);
+            withContext(() => {
+                equal(context(), cx);
+            }, cx);
+            equal(context(), mainCx);
+        }).then(done, done);
     });
 
-    describe('canWait', () => {
-        it('true inside run', (done) => {
-            run(() => {
-                ok(canWait())
-                return 'success';
-            }).then(result => {
-                equal(result, 'success');
-                done();
-            }, err => done(err));
-        });
-        it('false outside run', () => {
-            notOk(canWait());
-        });
-    });
+    test("contexts", () => {
+        function testContext(x: number) {
+            return withContext(() => {
+                var y = delay(2 * x);
+                strictEqual(y, 2 * context());
+                return y + 1;
+            }, x);
+        }
 
-    describe('eventHandler', () => {
-        it('can wait with it', (done) => {
-            setTimeout(eventHandler(() => {
-                ok(canWait());
-                done();
-            }), 0);
-        });
-        it('cannot wait without', (done) => {
-            setTimeout(() => {
-                notOk(canWait());
-                done();
-            }, 0);
-        });
-        it('outside run', (done) => {
+        var promises = [run(() => testContext(3)), run(() => testContext(5))];
+        deepEqual(promises.map(wait), [7, 11]);
+    })
+});
+
+describe('collection functions', () => {
+    it('map', (done) => {
+        run(() => {
+            deepEqual(map([2, 5], delay), [2, 5]);
+            return 'success';
+        }).then(result => {
+            equal(result, 'success');
+            done();
+        }, err => done(err));
+    });
+});
+
+describe('canWait', () => {
+    it('true inside run', (done) => {
+        run(() => {
+            ok(canWait())
+            return 'success';
+        }).then(result => {
+            equal(result, 'success');
+            done();
+        }, err => done(err));
+    });
+    it('false outside run', () => {
+        notOk(canWait());
+    });
+});
+
+describe('eventHandler', () => {
+    it('can wait with it', (done) => {
+        setTimeout(eventHandler(() => {
+            ok(canWait());
+            done();
+        }), 0);
+    });
+    it('cannot wait without', (done) => {
+        setTimeout(() => {
             notOk(canWait());
+            done();
+        }, 0);
+    });
+    it('outside run', (done) => {
+        notOk(canWait());
+        let sync = true;
+        eventHandler((arg: string) => {
+            equal(arg, "hello", 'arg ok');
+            wait(cb => setTimeout(cb, 0));
+            equal(sync, false, 'new fiber');
+            done();
+        })("hello");
+        sync = false;
+    });
+    it('inside run', (done) => {
+        run(() => {
             let sync = true;
+            ok(canWait());
             eventHandler((arg: string) => {
                 equal(arg, "hello", 'arg ok');
                 wait(cb => setTimeout(cb, 0));
-                equal(sync, false, 'new fiber');
+                equal(sync, true, 'same fiber as run');
                 done();
             })("hello");
             sync = false;
         });
-        it('inside run', (done) => {
-            run(() => {
-                let sync = true;
-                ok(canWait());
-                eventHandler((arg: string) => {
-                    equal(arg, "hello", 'arg ok');
-                    wait(cb => setTimeout(cb, 0));
-                    equal(sync, true, 'same fiber as run');
+    });
+    it('preserves arity', () => {
+        equal(eventHandler(() => { }).length, 0);
+        equal(eventHandler((a: any, b: any) => { }).length, 2);
+    });
+    it('starts with a fresh context if outside run', (done) => {
+        ok(!canWait());
+        eventHandler(() => {
+            isNotNull(context());
+            done();
+        })();
+    });
+    it('preserves context if already inside run', (done) => {
+        run(() => {
+            ok(canWait());
+            const cx = {};
+            withContext(() => {
+                eventHandler(() => {
+                    equal(context(), cx);
                     done();
-                })("hello");
-                sync = false;
-            });
-        });
-        it('preserves arity', () => {
-            equal(eventHandler(() => { }).length, 0);
-            equal(eventHandler((a: any, b: any) => { }).length, 2);
-        });
-        it('starts with a fresh context if outside run', (done) => {
-            const cx = context();
-            ok(!canWait());
-            eventHandler(() => {
-                notEqual(context(), cx);
-                done();
-            })();
-        });
-        it('preserves context if already inside run', (done) => {
-            run(() => {
-                ok(canWait());
-                const cx = {};
-                withContext(() => {
-                    eventHandler(() => {
-                        equal(context(), cx);
-                        done();
-                    })();
-                }, cx);
-            });
+                })();
+            }, cx);
         });
     });
 });
