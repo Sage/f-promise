@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "fibers": "^1.0.15",
-    "streamline-runtime": "^1.0.37"
+    "streamline-runtime": "^1.1.2"
   },
   "devDependencies": {
     "@types/chai": "^3.4.34",

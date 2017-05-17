@@ -146,8 +146,10 @@ describe('contexts', () => {
             }, x);
         }
 
+        isObject(context());
         var promises = [run(() => testContext(3)), run(() => testContext(5))];
         deepEqual(promises.map(wait), [7, 11]);
+        isObject(context());
     })
 });
 
