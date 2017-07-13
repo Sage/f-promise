@@ -1,6 +1,6 @@
 // Very thin implementation. Streamline.js does all the work.
 import { _ } from 'streamline-runtime';
-const Fibers = require('fibers');
+const fibers = require('fibers');
 
 export type Callback<T> = (err: any, result?: T) => void;
 export type Thunk<T> = (cb: Callback<T>) => void;
@@ -9,10 +9,10 @@ export function wait<T>(arg: Promise<T> | Thunk<T>): T {
 	if (typeof arg === 'function') {
 		// fiberized test optimizes calls to streamlined thunks: (_: _) => T 
 		const fiberized = (arg as any)['fiberized-0'];
-		if (fiberized) return fiberized(true)
+		if (fiberized) return fiberized(true);
 		else return wait(_.promise(_ => _.cast<T>(arg as any)(_)));
 	} else {
-		const streamlined = ((_: _) => arg.then(_, _))
+		const streamlined = ((_: _) => arg.then(_, _));
 		return (streamlined as any)['fiberized-0'].call(null, true);
 	}
 }
@@ -22,9 +22,9 @@ export function run<T>(fn: () => T): Promise<T> {
 }
 
 export function map<T, R>(collection: T[], fn: (val: T) => R) {
-	return collection.map((item) => {
+	return collection.map(item => {
 		return run(() => fn(item));
-	}).map(wait)
+	}).map(wait);
 }
 
 // goodies
@@ -54,8 +54,8 @@ export function map<T, R>(collection: T[], fn: (val: T) => R) {
 /// won't be called, and no other operation will enter the funnel.
 export function funnel<T>(n: number): (fn: () => T) => T;
 export function funnel<T>(n: number): (fn: () => T | undefined) => T | undefined {
-	var fun = _.funnel<T>(n);
-	return (fn) => wait<T>(_ => fun(_ as any, (_: _) => fn()));
+	const fun = _.funnel<T>(n);
+	return fn => wait<T>(_ => fun(_ as any, (_: _) => fn()));
 }
 
 /// 
@@ -67,15 +67,15 @@ export function funnel<T>(n: number): (fn: () => T | undefined) => T | undefined
 ///   `hs.notify()`: notifies `hs`.  
 ///   Note: `wait` calls are not queued. An exception is thrown if wait is called while another `wait` is pending.
 export function handshake<T>() {
-	var callback: Callback<T> | undefined = undefined, notified = false;
+	let callback: Callback<T> | undefined = undefined, notified = false;
 	return {
 		wait() {
 			return wait<T>((cb: Callback<T>) => {
-				if (callback) throw new Error("already waiting");
+				if (callback) throw new Error('already waiting');
 				if (notified) setImmediate(cb);
 				else callback = cb;
 				notified = false;
-			})
+			});
 		},
 		notify() {
 			if (!callback) notified = true;
@@ -83,7 +83,7 @@ export function handshake<T>() {
 			callback = undefined;
 		},
 	};
-};
+}
 
 /// * `q = new Queue(options)`  
 ///   allocates a queue which may be used to send data asynchronously between two tasks.  
@@ -100,24 +100,26 @@ export class Queue<T> {
 	_q: (T | undefined)[] = [];
 	_pendingWrites: [Callback<T>, T | undefined][] = [];
 	constructor(options?: QueueOptions | number) {
-		if (typeof options === 'number') options = {
-			max: options,
-		};
+		if (typeof options === 'number') {
+			options = {
+				max: options,
+			};
+		}
 		options = options || {};
 		this._max = options.max != null ? options.max : -1;
 	}
 	read() {
 		return wait<T>((cb: Callback<T>) => {
-			if (this._callback) throw new Error("already getting");
+			if (this._callback) throw new Error('already getting');
 			if (this._q.length > 0) {
-				var item = this._q.shift();
+				const item = this._q.shift();
 				// recycle queue when empty to avoid maintaining arrays that have grown large and shrunk
 				if (this._q.length === 0) this._q = [];
 				setImmediate(() => {
 					cb(this._err, item);
 				});
 				if (this._pendingWrites.length > 0) {
-					var wr = this._pendingWrites.shift();
+					const wr = this._pendingWrites.shift();
 					setImmediate(() => {
 						wr && wr[0](this._err, wr[1]);
 					});
@@ -125,7 +127,7 @@ export class Queue<T> {
 			} else {
 				this._callback = cb;
 			}
-		})
+		});
 	}
 	///   `q.write(data)`:  queues an item. Waits if the queue is full.  
 	write(item: T | undefined) {
@@ -138,7 +140,7 @@ export class Queue<T> {
 				this._pendingWrites.push([cb, item]);
 			}
 
-		})
+		});
 	}
 	///   `ok = q.put(data)`: queues an item synchronously. Returns true if the queue accepted it, false otherwise. 
 	put(item: T | undefined, force?: boolean) {
@@ -146,7 +148,7 @@ export class Queue<T> {
 			if (this._max >= 0 && this._q.length >= this._max && !force) return false;
 			this._q.push(item);
 		} else {
-			var cb = this._callback;
+			const cb = this._callback;
 			this._callback = undefined;
 			setImmediate(() => {
 				cb(this._err, item);
@@ -168,8 +170,8 @@ export class Queue<T> {
 	}
 	///   `q.adjust(fn[, thisObj])`: adjusts the contents of the queue by calling `newContents = fn(oldContents)`.  
 	adjust(fn: (old: (T | undefined)[]) => (T | undefined)[]) {
-		var nq = fn.call(null, this._q);
-		if (!Array.isArray(nq)) throw new Error("adjust function does not return array");
+		const nq = fn.call(null, this._q);
+		if (!Array.isArray(nq)) throw new Error('adjust function does not return array');
 		this._q = nq;
 	}
 	get length() { return this._q.length; }
@@ -183,13 +185,13 @@ export class Queue<T> {
 ///   The previous context will be restored when the function returns (or throws).  
 ///   returns the wrapped function.
 export function withContext<T>(fn: () => T, cx: any) {
-	if (!Fibers.current) throw new Error('withContext(fn) not allowed outside run()');
+	if (!fibers.current) throw new Error('withContext(fn) not allowed outside run()');
 	return _.withContext(fn, cx)();
-};
+}
 
 export function context() {
 	return _.context;
-};
+}
 
 // wait variant for streamline.js
 export function wait_<T>(arg: (_: _) => T): T {
@@ -203,7 +205,7 @@ export function wait_<T>(arg: (_: _) => T): T {
 /// * `ok = canWait()`  
 ///   returns whether `wait` calls are allowed (whether we are called from a `run`).
 export function canWait() {
-	return !!Fibers.current;
+	return !!fibers.current;
 }
 
 /// 
@@ -214,7 +216,7 @@ export function canWait() {
 export function eventHandler<T extends Function>(handler: T): T {
 	const wrapped = function (this: any, ...args: any[]) {
 		if (canWait()) handler.apply(this, args);
-		else run(() => withContext(() => handler.apply(this, args), {})).catch(err => { throw err });
+		else run(() => withContext(() => handler.apply(this, args), {})).catch(err => { throw err; });
 	} as any;
 	// preserve arity
 	Object.defineProperty(wrapped, 'length', { value: handler.length });
