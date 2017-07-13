@@ -1,0 +1,94 @@
+{
+    "rules": {
+        // same order as https://palantir.github.io/tslint/rules/
+        // TypeScript specific rules
+        "no-inferrable-types": true,
+        "no-reference": true,
+        "no-unnecessary-type-assertion": true,
+        "prefer-for-of": true,
+        // Functionality rules
+        "await-promise": true,
+        "curly": [
+            true,
+            "ignore-same-line"
+        ],
+        "label-position": true,
+        "no-arg": true,
+        "no-construct": true,
+        "no-duplicate-super": true,
+        "no-duplicate-variable": true,
+        "no-empty": false,
+        "no-eval": true,
+        "no-floating-promises": false, // see https://github.com/palantir/tslint/issues/2879
+        "no-for-in-array": true,
+        "no-inferred-empty-object-type": true,
+        "no-invalid-template-strings": true,
+        "no-misused-new": true,
+        "no-shadowed-variable": false,
+        "no-switch-case-fall-through": true,
+        "no-sparse-arrays": true,
+        "no-string-throw": true,
+        "no-unsafe-finally": true,
+        "no-unused-expression": [
+            true,
+            "allow-fast-null-checks"
+        ],
+        "no-var-keyword": true,
+        "prefer-object-spread": true,
+        "triple-equals": [
+            true,
+            "allow-null-check"
+        ],
+        "typeof-compare": true,
+        "use-isnan": true,
+        // Maintainability rules
+        "indent": [
+            true,
+            "tabs",
+            4
+        ],
+        "max-line-length": [
+            true,
+            200
+        ],
+        "prefer-const": true,
+        // Style rules
+        "trailing-comma": [
+            true,
+            {
+                "multiline": "always",
+                "singleline": "never"
+            }
+        ],
+        "arrow-parens": [
+            true,
+            "ban-single-arg-parens"
+        ],
+        "arrow-return-shorthand": true,
+        "class-name": true,
+        "encoding": true,
+        "new-parens": true,
+        "no-boolean-literal-compare": true,
+        "no-consecutive-blank-lines": true,
+        "no-irregular-whitespace": true,
+        "no-unnecessary-callback-wrapper": true,
+        "ordered-imports": [
+            true
+        ],
+        "quotemark": [
+            true,
+            "single",
+            "avoid-escape"
+        ],
+        "semicolon": [
+            true,
+            "always"
+        ],
+        "variable-name": [
+            true,
+            "check-format",
+            "ban-keywords",
+            "allow-leading-underscore"
+        ]
+    }
+}
