@@ -30,7 +30,7 @@ describe('wait', () => {
 			const text = wait(mzfs.readFile(fname, 'utf8'));
 			typeOf(text, 'string');
 			ok(text.length > 200);
-			ok(text.indexOf('/// <reference ') === 0);
+			ok(text.indexOf('// tslint') === 0);
 			const text2 = wait(mzfs.readFile(fname, 'utf8'));
 			equal(text, text2);
 			return 'success';
@@ -47,7 +47,7 @@ describe('wait', () => {
 			const text = wait<string>(cb => fs.readFile(fname, 'utf8', cb));
 			typeOf(text, 'string');
 			ok(text.length > 200);
-			ok(text.indexOf('/// <reference ') === 0);
+			ok(text.indexOf('// tslint') === 0);
 			const text2 = wait<string>(cb => fs.readFile(fname, 'utf8', cb));
 			equal(text, text2);
 			return 'success';
@@ -64,7 +64,7 @@ describe('wait', () => {
 			const text = wait_(_ => fs.readFile(fname, 'utf8', _));
 			typeOf(text, 'string');
 			ok(text.length > 200);
-			ok(text.indexOf('/// <reference ') === 0);
+			ok(text.indexOf('// tslint') === 0);
 			const text2 = wait_<string>(_ => fs.readFile(fname, 'utf8', _));
 			equal(text, text2);
 			return 'success';
