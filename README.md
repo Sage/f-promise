@@ -151,6 +151,12 @@ won't be called, and no other operation will enter the funnel.
   The previous context will be restored when the function returns (or throws).  
   returns the wrapped function.
 
+## Related projects
+
+* [f-streams](https://github.com/Sage/f-streams)
+* [f-express](https://github.com/Sage/f-express)
+* [f-mocha](https://github.com/Sage/f-mocha)
+
 ## License
 
 MIT.
