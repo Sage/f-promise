@@ -52,10 +52,10 @@ export function map<T, R>(collection: T[], fn: (val: T) => R) {
 /// The funnel can be closed with `fun.close()`.  
 /// When a funnel is closed, the operations that are still in the funnel will continue but their callbacks
 /// won't be called, and no other operation will enter the funnel.
-export function funnel<T>(n: number): (fn: () => T) => T;
-export function funnel<T>(n: number): (fn: () => T | undefined) => T | undefined {
-	const fun = _.funnel<T>(n);
-	return fn => wait<T>(_ => fun(_ as any, (_: _) => fn()));
+export function funnel(n: number): <T>(fn: () => T) => T;
+export function funnel(n: number): <T>(fn: () => T | undefined) => T | undefined {
+	const fun = _.funnel(n);
+	return fn => wait(_ => fun(_ as any, (_: _) => fn()));
 }
 
 /// 
