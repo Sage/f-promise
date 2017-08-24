@@ -5,6 +5,7 @@
         "target": "es2015",
         "outDir": "build",
         "rootDir": ".",
+        "declaration": true,
         "sourceMap": true,
         "noImplicitAny": true,
         "noImplicitThis": true,
