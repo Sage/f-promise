@@ -194,7 +194,8 @@ export function context() {
 }
 
 // wait variant for streamline.js
-export function wait_<T>(arg: (_: _) => T): T {
+// Callback parameter is typed as any so that f-promise does not re-export streamline-runtime's _ definition.
+export function wait_<T>(arg: (_: any) => T): T {
 	const fiberized = (arg as any)['fiberized-0'];
 	return fiberized(true);
 }
