@@ -110,6 +110,8 @@ const readdir = path => wait(cb => fs.readdir(path, cb));
 ````
 
 ## Control Flow utilities
+
+These goodies solve some common problems and offer an easy upgrade path from streamline.js (which bundled a similar API).
  
 ### funnel
 
