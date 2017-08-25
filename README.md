@@ -86,6 +86,8 @@ You have to write the loop differently, with `for ... of ...` or `Promise.all`.
 they are _normal_ JavaScript functions. `async/await` keywords don't invade the code.
 * `wait` plays well with array methods, and with other APIs that expect _synchronous_ callbacks.
 
+Coroutines have other advantages, like providing complete meaningful stacktraces without any overhead.
+
 ## TypeScript support
 
 TypeScript is fully supported.
@@ -96,7 +98,6 @@ You can also use `f-promise` with callback APIs.
 So you don't absolutely need wrappers like `mz/fs`, you can directly call node's `fs` API:
 
 ```javascript
-// promise style
 import { wait } from 'f-promise';
 
 // promise style
