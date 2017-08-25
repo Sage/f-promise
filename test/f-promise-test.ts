@@ -1,5 +1,6 @@
-// tslint:disable-next-line:no-reference
+// tslint:disable:no-reference
 /// <reference path="../node_modules/streamline-node/index.d.ts" />
+/// <reference path="../node_modules/streamline-typings/streamline-runtime.d.ts" />
 import { assert } from 'chai';
 import * as fs from 'fs';
 import * as mzfs from 'mz/fs';

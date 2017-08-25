@@ -27,6 +27,7 @@
     "mz": "^2.6.0",
     "streamline": "^2.0.13",
     "streamline-node": "^2.0.2",
+    "streamline-typings": "^1.0.1",
     "typescript": "^2.0.10"
   },
   "keywords": [
