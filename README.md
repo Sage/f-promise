@@ -90,6 +90,24 @@ they are _normal_ JavaScript functions. `async/await` keywords don't invade the 
 
 TypeScript is fully supported.
 
+## Callbacks support
+
+You can also use `f-promise` with callback APIs. 
+So you don't absolutely need wrappers like `mz/fs`, you can directly call node's `fs` API:
+
+```javascript
+// promise style
+import { wait } from 'f-promise';
+
+// promise style
+import * as mzfs from 'mz/fs';
+const readdir = path => wait(mzfs.readdir(path));
+
+// callback style
+import * as fs from 'fs';
+const readdir = path => wait(cb => fs.readdir(path, cb));
+````
+
 ## Control Flow utilities
  
 ### funnel
