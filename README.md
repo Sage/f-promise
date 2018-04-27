@@ -86,11 +86,32 @@ You have to write the loop differently, with `for ... of ...` or `Promise.all`.
 they are _normal_ JavaScript functions. `async/await` keywords don't invade the code.
 * `wait` plays well with array methods, and with other APIs that expect _synchronous_ callbacks.
 
+Coroutines have other advantages, like providing complete meaningful stacktraces without any overhead.
+
 ## TypeScript support
 
 TypeScript is fully supported.
 
+## Callbacks support
+
+You can also use `f-promise` with callback APIs. 
+So you don't absolutely need wrappers like `mz/fs`, you can directly call node's `fs` API:
+
+```javascript
+import { wait } from 'f-promise';
+
+// promise style
+import * as mzfs from 'mz/fs';
+const readdir = path => wait(mzfs.readdir(path));
+
+// callback style
+import * as fs from 'fs';
+const readdir = path => wait(cb => fs.readdir(path, cb));
+````
+
 ## Control Flow utilities
+
+These goodies solve some common problems and offer an easy upgrade path from streamline.js (which bundled a similar API).
  
 ### funnel
 
