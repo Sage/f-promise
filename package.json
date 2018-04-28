@@ -41,8 +41,8 @@
     "url": "git://github.com/Sage/f-promise.git"
   },
   "scripts": {
-    "prepublish": "rm -rf build && node_modules/typescript/bin/tsc && node_modules/streamline/bin/_node --runtime fibers --out-dir build -c index.ts src test examples/disk-usage.ts && node node_modules/typescript/bin/tsc --target ES2015 --module commonjs --outDir build examples/disk-usage-async-await.ts",
-    "test": "node_modules/mocha/bin/mocha build/test",
+    "prepare": "rm -rf build && tsc && _node --runtime fibers --out-dir build -c index.ts src test examples/disk-usage.ts && tsc --target ES2015 --module commonjs --outDir build examples/disk-usage-async-await.ts",
+    "test": "mocha build/test",
     "lint": "tslint -e 'node_modules/**' -p ."
   }
 }
