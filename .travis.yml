@@ -1,6 +1,7 @@
 sudo: false
 dist: trusty
 language: node_js
+before_install: if [[ `npm -v` != 5* ]]; then npm i -g npm@5; fi
 node_js:
   - 10
   - 8
