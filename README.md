@@ -155,7 +155,7 @@ won't be called, and no other operation will enter the funnel.
   The returned queue has the following methods:  
   `data = q.read()`: dequeues an item from the queue. Waits if no element is available.  
   `q.write(data)`:  queues an item. Waits if the queue is full.  
-  `ok = q.put(data)`: queues an item synchronously. Returns true if the queue accepted it, false otherwise. 
+  `ok = q.put(data)`: queues an item synchronously. Returns true if the queue accepted it, false otherwise.  
   `q.end()`: ends the queue. This is the synchronous equivalent of `q.write(undefined)`  
   `data = q.peek()`: returns the first item, without dequeuing it. Returns `undefined` if the queue is empty.  
   `array = q.contents()`: returns a copy of the queue's contents.  
