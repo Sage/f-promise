@@ -13,7 +13,7 @@ The `f-promise` API consists in 2 calls: `wait` and `run`.
 * `result = wait(promise)`:  waits on a promise and returns its result (or throws if the promise is rejected).
 * `promise = run(fn)`: runs a function as a coroutine and returns a promise for the function's result.
 
-Constraint: `wait` may only be called from a coroutine (a function which is executed by `run`).
+Constraint: `wait` may only be called from a coroutine (a function which is executed by `run`, directly or indirectly, through one of its callers).
 
 ## Simple example
 
