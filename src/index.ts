@@ -233,12 +233,17 @@ if (process.execArgv.find(str => str.startsWith('--inspect-brk='))) {
 	// but unfortunately this is an internal V8 API.
 	// This test is the best workaround I have found.
 	const isDebugEval = () => (new Error().stack || '').indexOf('.remoteFunction (<anonymous>') >= 0;
+	const errHandler = (err: Error) => { if (err) console.error(`promise discarded by debugger hook returned error: ${err.message}`) };
 
 	const oldWait = wait;
 	wait = <T>(arg: Promise<T> | Thunk<T>): T => {
 		if (isDebugEval()) {
-			if (typeof arg !== 'function') {
-				arg.catch(err => console.error(`promise discarded by debugger hook returned error: ${err.message}`));
+			if (typeof arg === 'function') {
+				const fiberized = (arg as any)['fiberized-0'];
+				if (fiberized) return fiberized(true);
+				else (arg as any)(errHandler); // fire and forget
+			} else {
+				arg.catch(errHandler); // fire and forget
 			}
 			throw '<would yield>';
 		}
