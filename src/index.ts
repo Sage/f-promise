@@ -234,17 +234,19 @@ if (process.execArgv.find(str => str.startsWith('--inspect-brk='))) {
 	// This test is the best workaround I have found.
 	const isDebugEval = () => (new Error().stack || '').indexOf('.remoteFunction (<anonymous>') >= 0;
 
+	const oldWait = wait;
+
 	const flushDelayed = () => {
 		if (fibers.current.delayed) {
-			for (const arg of fibers.current.delayed) {
-				try { wait(arg); }
-				catch (err) { console.error(`promise discarded by debugger hook returned error: ${err.message}`); }
-			}
+			const delayed = fibers.current.delayed;
 			fibers.current.delayed = undefined;
+			for (const arg of delayed) {
+				try { oldWait(arg); }
+				catch (err) { console.error(`delayed 'wait' call failed: ${err.message}`); }
+			}
 		}
 	}
 
-	const oldWait = wait;
 	wait = <T>(arg: Promise<T> | Thunk<T>): T => {
 		if (isDebugEval()) {
 			if (!fibers.current.delayed) fibers.current.delayed = [];
