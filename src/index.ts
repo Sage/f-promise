@@ -17,7 +17,7 @@ export let wait = <T>(arg: Promise<T> | Thunk<T>): T => {
 	}
 }
 
-export function run<T>(fn: () => T): Promise<T> {
+export let run = <T>(fn: () => T): Promise<T> => {
 	return _.promise((_: _) => fn());
 }
 
@@ -228,14 +228,26 @@ export function eventHandler<T extends Function>(handler: T): T {
 // The debugger hangs if Fiber.yield is called when evaluating expressions at a breakpoint
 // So we monkey patch wait to throw an exception if it detects this special situation.
 if (process.execArgv.find(str => str.startsWith('--inspect-brk='))) {
+	// Unfortunately, there is no public API to check if we are called from a breakpoint.
+	// There is a C++ API (context->IsDebugEvaluateContext()) to test this 
+	// but unfortunately this is an internal V8 API.
+	// This test is the best workaround I have found.
+	const isDebugEval = () => (new Error().stack || '').indexOf('.remoteFunction (<anonymous>') >= 0;
+
 	const oldWait = wait;
 	wait = <T>(arg: Promise<T> | Thunk<T>): T => {
-		// Unfortunately, there is no public API to check if we are called from a breakpoint.
-		// There is a C++ API (context->IsDebugEvaluateContext()) to test this 
-		// but unfortunately this is an internal V8 API.
-		// This test is the best workaround I have found.
-		if ((new Error().stack || '').indexOf('.remoteFunction (<anonymous>') >= 0) throw '<would yield>';
+		if (isDebugEval()) {
+			if (typeof arg !== 'function') {
+				arg.catch(err => console.error(`promise discarded by debugger hook returned error: ${err.message}`));
+			}
+			throw '<would yield>';
+		}
 		return oldWait(arg);
 	};
-	console.log('Running with f-promise debugger hook');
+	const oldRun = run;
+	run = <T>(fn: () => T): Promise<T> => {
+		if (isDebugEval()) throw '<would run a fiber>';
+		return oldRun(fn);
+	};
+	console.log('Running with f-promise debugger hooks');
 }
