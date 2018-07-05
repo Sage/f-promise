@@ -223,3 +223,19 @@ export function eventHandler<T extends Function>(handler: T): T {
 	Object.defineProperty(wrapped, 'length', { value: handler.length });
 	return wrapped;
 }
+
+// little goodie to improve V8 debugger experience
+// The debugger hangs if Fiber.yield is called when evaluating expressions at a breakpoint
+// So we monkey patch yield to throw an exception if it detects this special situation.
+if (process.execArgv.find(str => str.startsWith('--inspect-brk='))) {
+	const oldYield = fibers.yield;
+	fibers.yield = function (val: any) {
+		// Unfortunately, there is no public API to check if we are called from a breakpoint.
+		// There is a C++ API (context->IsDebugEvaluateContext()) to test this 
+		// but unfortunately this is an internal V8 API.
+		// This test is the best workaround I have found.
+		if ((new Error().stack || '').indexOf('.remoteFunction (<anonymous>') >= 0) throw '<would yield>';
+		return oldYield.call(this, val);
+	};
+	console.log('Running with f-promise debugger hook');
+}
