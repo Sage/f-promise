@@ -233,26 +233,32 @@ if (process.execArgv.find(str => str.startsWith('--inspect-brk='))) {
 	// but unfortunately this is an internal V8 API.
 	// This test is the best workaround I have found.
 	const isDebugEval = () => (new Error().stack || '').indexOf('.remoteFunction (<anonymous>') >= 0;
-	const errHandler = (err: Error) => { if (err) console.error(`promise discarded by debugger hook returned error: ${err.message}`) };
+
+	const flushDelayed = () => {
+		if (fibers.current.delayed) {
+			for (const arg of fibers.current.delayed) {
+				try { wait(arg); }
+				catch (err) { console.error(`promise discarded by debugger hook returned error: ${err.message}`); }
+			}
+			fibers.current.delayed = undefined;
+		}
+	}
 
 	const oldWait = wait;
 	wait = <T>(arg: Promise<T> | Thunk<T>): T => {
 		if (isDebugEval()) {
-			if (typeof arg === 'function') {
-				const fiberized = (arg as any)['fiberized-0'];
-				if (fiberized) return fiberized(true);
-				else (arg as any)(errHandler); // fire and forget
-			} else {
-				arg.catch(errHandler); // fire and forget
-			}
+			if (!fibers.current.delayed) fibers.current.delayed = [];
+			fibers.current.delayed.push(arg);
 			throw '<would yield>';
+		} else {
+			flushDelayed();
+			return oldWait(arg);
 		}
-		return oldWait(arg);
 	};
 	const oldRun = run;
 	run = <T>(fn: () => T): Promise<T> => {
 		if (isDebugEval()) throw '<would run a fiber>';
-		return oldRun(fn);
+		else return oldRun(fn);
 	};
 	console.log('Running with f-promise debugger hooks');
 }
