@@ -251,7 +251,7 @@ if (process.execArgv.find(str => str.startsWith('--inspect-brk='))) {
 		if (isDebugEval()) {
 			if (!fibers.current.delayed) fibers.current.delayed = [];
 			fibers.current.delayed.push(arg);
-			throw '<would yield>';
+			throw 'would yield';
 		} else {
 			flushDelayed();
 			return oldWait(arg);
@@ -259,7 +259,7 @@ if (process.execArgv.find(str => str.startsWith('--inspect-brk='))) {
 	};
 	const oldRun = run;
 	run = <T>(fn: () => T): Promise<T> => {
-		if (isDebugEval()) throw '<would run a fiber>';
+		if (isDebugEval()) throw 'would start a fiber';
 		else return oldRun(fn);
 	};
 	console.log('Running with f-promise debugger hooks');
