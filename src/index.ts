@@ -5,7 +5,7 @@ const fibers = require('fibers');
 export type Callback<T> = (err: any, result?: T) => void;
 export type Thunk<T> = (cb: Callback<T>) => void;
 
-export function wait<T>(arg: Promise<T> | Thunk<T>): T {
+export let wait = <T>(arg: Promise<T> | Thunk<T>): T => {
 	if (typeof arg === 'function') {
 		// fiberized test optimizes calls to streamlined thunks: (_: _) => T 
 		const fiberized = (arg as any)['fiberized-0'];
@@ -17,7 +17,7 @@ export function wait<T>(arg: Promise<T> | Thunk<T>): T {
 	}
 }
 
-export function run<T>(fn: () => T): Promise<T> {
+export let run = <T>(fn: () => T): Promise<T> => {
 	return _.promise((_: _) => fn());
 }
 
@@ -226,16 +226,41 @@ export function eventHandler<T extends Function>(handler: T): T {
 
 // little goodie to improve V8 debugger experience
 // The debugger hangs if Fiber.yield is called when evaluating expressions at a breakpoint
-// So we monkey patch yield to throw an exception if it detects this special situation.
+// So we monkey patch wait to throw an exception if it detects this special situation.
 if (process.execArgv.find(str => str.startsWith('--inspect-brk='))) {
-	const oldYield = fibers.yield;
-	fibers.yield = function (val: any) {
-		// Unfortunately, there is no public API to check if we are called from a breakpoint.
-		// There is a C++ API (context->IsDebugEvaluateContext()) to test this 
-		// but unfortunately this is an internal V8 API.
-		// This test is the best workaround I have found.
-		if ((new Error().stack || '').indexOf('.remoteFunction (<anonymous>') >= 0) throw '<would yield>';
-		return oldYield.call(this, val);
+	// Unfortunately, there is no public API to check if we are called from a breakpoint.
+	// There is a C++ API (context->IsDebugEvaluateContext()) to test this 
+	// but unfortunately this is an internal V8 API.
+	// This test is the best workaround I have found.
+	const isDebugEval = () => (new Error().stack || '').indexOf('.remoteFunction (<anonymous>') >= 0;
+
+	const oldWait = wait;
+
+	const flushDelayed = () => {
+		if (fibers.current.delayed) {
+			const delayed = fibers.current.delayed;
+			fibers.current.delayed = undefined;
+			for (const arg of delayed) {
+				try { oldWait(arg); }
+				catch (err) { console.error(`delayed 'wait' call failed: ${err.message}`); }
+			}
+		}
+	}
+
+	wait = <T>(arg: Promise<T> | Thunk<T>): T => {
+		if (isDebugEval()) {
+			if (!fibers.current.delayed) fibers.current.delayed = [];
+			fibers.current.delayed.push(arg);
+			throw 'would yield';
+		} else {
+			flushDelayed();
+			return oldWait(arg);
+		}
 	};
-	console.log('Running with f-promise debugger hook');
+	const oldRun = run;
+	run = <T>(fn: () => T): Promise<T> => {
+		if (isDebugEval()) throw 'would start a fiber';
+		else return oldRun(fn);
+	};
+	console.log('Running with f-promise debugger hooks');
 }
