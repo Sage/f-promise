@@ -13,7 +13,7 @@
     "node": ">=4.0.0"
   },
   "dependencies": {
-    "fibers": "^2.0.2",
+    "fibers": "^3.0.0",
     "streamline-runtime": "^1.1.15"
   },
   "devDependencies": {
