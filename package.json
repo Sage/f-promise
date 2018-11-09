@@ -1,6 +1,6 @@
 {
   "name": "f-promise",
-  "version": "1.3.7",
+  "version": "1.4.0",
   "license": "MIT",
   "description": "Promise-oriented coroutines for node.js",
   "author": {
@@ -13,7 +13,7 @@
     "node": ">=4.0.0"
   },
   "dependencies": {
-    "fibers": "^2.0.2",
+    "fibers": "^3.0.0",
     "streamline-runtime": "^1.1.15"
   },
   "devDependencies": {
