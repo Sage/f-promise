@@ -1,14 +1,11 @@
 // tslint:disable:no-reference
-/// <reference path="../node_modules/streamline-node/index.d.ts" />
-/// <reference path="../node_modules/streamline-typings/streamline-runtime.d.ts" />
 import { assert } from 'chai';
 import * as fs from 'fs';
 import * as mzfs from 'mz/fs';
 import * as fsp from 'path';
-import { _ } from 'streamline-runtime';
-import { canWait, context, eventHandler, map, Queue, run, wait, wait_, withContext } from '..';
+import { canWait, context, eventHandler, funnel, handshake, map, Queue, run, sleep, wait, withContext } from '..';
 
-const { ok, notOk, equal, notEqual, deepEqual, strictEqual, typeOf, isNull, isNotNull, isUndefined, isObject } = assert;
+const { ok, notOk, equal, notEqual, deepEqual, strictEqual, closeTo, fail, typeOf, isNull, isNotNull, isUndefined, isObject, throws } = assert;
 
 function test(name: string, fn: () => void) {
 	it(name, done => {
@@ -25,7 +22,7 @@ function delay<T>(val: T, millis?: number) {
 }
 
 describe('wait', () => {
-	it('promise wait', done => {
+	it('promise wait with success', done => {
 		const p = run(() => {
 			const fname = fsp.join(__dirname, '../../test/f-promise-test.ts');
 			const text = wait(mzfs.readFile(fname, 'utf8'));
@@ -41,8 +38,19 @@ describe('wait', () => {
 			done();
 		}, done);
 	});
-
-	it('callback wait', done => {
+	it('promise wait with error', done => {
+		const p = run(() => {
+			const fname = fsp.join(__dirname, '../../test/f-promise-test.ts.not.exist');
+			wait(mzfs.readFile(fname, 'utf8'));
+		});
+		p.then(result => {
+			fail();
+			done();
+		}, e => {
+			done();
+		});
+	});
+	it('callback wait with success', done => {
 		const p = run(() => {
 			const fname = fsp.join(__dirname, '../../test/f-promise-test.ts');
 			const text = wait<string>(cb => fs.readFile(fname, 'utf8', cb));
@@ -58,22 +66,17 @@ describe('wait', () => {
 			done();
 		}, done);
 	});
-
-	it('streamline wait', done => {
+	it('callback wait with error', done => {
 		const p = run(() => {
-			const fname = fsp.join(__dirname, '../../test/f-promise-test.ts');
-			const text = wait_(_ => fs.readFile(fname, 'utf8', _));
-			typeOf(text, 'string');
-			ok(text.length > 200);
-			ok(text.indexOf('// tslint') === 0);
-			const text2 = wait_<string>(_ => fs.readFile(fname, 'utf8', _));
-			equal(text, text2);
-			return 'success';
+			const fname = fsp.join(__dirname, '../../test/f-promise-test.ts.not.exist');
+			wait<string>(cb => fs.readFile(fname, 'utf8', cb));
 		});
 		p.then(result => {
-			equal(result, 'success');
+			fail();
 			done();
-		}, done);
+		}, e => {
+			done();
+		});
 	});
 });
 
@@ -118,6 +121,93 @@ describe('queue', () => {
 	});
 });
 
+describe('handshake', () => {
+	test('notify without wait', () => {
+		const hk = handshake();
+		hk.notify();
+		hk.notify();
+	});
+	test('wait then notify', () => {
+		const hk = handshake();
+		let counter = 0;
+
+		function runSleepAndCount() {
+			run(() => {
+				sleep(10);
+				counter++;
+				hk.notify();
+			});
+		}
+
+		equal(counter, 0);
+		runSleepAndCount();
+		hk.wait();
+		equal(counter, 1);
+		runSleepAndCount();
+		hk.wait();
+		equal(counter, 2);
+	});
+	test('multiple wait fails', () => {
+		const hk = handshake();
+		let thrown = false;
+		function runAntWait() {
+			run(() => {
+				hk.wait();
+			}).catch(e => {
+				thrown = true;
+			});
+		}
+		runAntWait();
+		runAntWait();
+		sleep(10);
+		hk.notify(); // release not thrown run
+		equal(thrown, true);
+	});
+});
+
+describe('funnel', () => {
+	test('less concurrency than allowed', () => {
+		const fun = funnel(4);
+		const begin = Date.now();
+		map([10, 10], timeToSleep => {
+			fun(() => {
+				sleep(timeToSleep);
+			});
+		});
+		closeTo(Date.now() - begin, 10, 4);
+	});
+	test('more concurrency than allowed', () => {
+		const fun = funnel(2);
+		const begin = Date.now();
+		map([10, 10, 10, 10], timeToSleep => {
+			fun(() => {
+				sleep(timeToSleep);
+			});
+		});
+		closeTo(Date.now() - begin, 20, 4);
+	});
+	test('close funnel access', () => {
+		const fun = funnel(1);
+		const begin = Date.now();
+		let counterInside = 0;
+		let counterOutside = 0;
+		run(() => {
+			sleep(15);
+			fun.close();
+		});
+		map([10, 10, 10, 10], timeToSleep => {
+			fun(() => {
+				sleep(timeToSleep);
+				counterInside++;
+			});
+			counterOutside++;
+		});
+		equal(counterInside, 2);
+		equal(counterOutside, 4);
+		closeTo(Date.now() - begin, 20, 4);
+	});
+});
+
 describe('contexts', () => {
 	const mainCx = context();
 	it('is main at top level', () => {
@@ -143,7 +233,7 @@ describe('contexts', () => {
 		function testContext(x: number) {
 			return withContext(() => {
 				const y = delay(2 * x);
-				strictEqual(y, 2 * context());
+				strictEqual(y, 2 * context<number>());
 				return y + 1;
 			}, x);
 		}

@@ -17,4 +17,4 @@ function printDiskUsage(dir: string) {
 }
 
 run(() => printDiskUsage(process.cwd()))
-	.catch(err => { throw err; });
+	.catch(err => { console.error(err.stack); });

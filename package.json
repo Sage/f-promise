@@ -13,21 +13,16 @@
     "node": ">=4.0.0"
   },
   "dependencies": {
-    "fibers": "^3.0.0",
-    "streamline-runtime": "^1.1.15"
+    "fibers": "^3.0.0"
   },
   "devDependencies": {
     "@types/chai": "^3.4.34",
-    "@types/fibers": "^0.0.29",
     "@types/mocha": "^5.2.4",
     "@types/mz": "0.0.32",
     "@types/node": "^8.10.34",
     "chai": "^4.1.2",
     "mocha": "^5.2.0",
     "mz": "^2.7.0",
-    "streamline": "^2.1.3",
-    "streamline-node": "^3.0.0",
-    "streamline-typings": "^1.0.1",
     "typescript": "^2.9.2"
   },
   "keywords": [
@@ -41,8 +36,8 @@
     "url": "git://github.com/Sage/f-promise.git"
   },
   "scripts": {
-    "prepare": "rm -rf build && tsc && _node --runtime fibers --out-dir build -c index.ts src test examples/disk-usage.ts && tsc --target ES2015 --module commonjs --outDir build examples/disk-usage-async-await.ts",
-    "test": "mocha build/test",
+    "prepare": "rm -rf build && tsc && tsc --target ES2015 --module commonjs --outDir build examples/disk-usage-async-await.ts",
+    "test": "_mocha build/test",
     "lint": "tslint -e 'node_modules/**' -p ."
   }
 }
