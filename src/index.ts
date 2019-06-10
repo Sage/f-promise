@@ -19,17 +19,19 @@ export let wait = <T = any>(promiseOrCallback: Promise<T> | Thunk<T>): T => {
 	const fiber = fibers.current;
 	if (typeof promiseOrCallback === 'function') {
 		promiseOrCallback((err, res) => {
-			let cx = globals.context;
-			try {
-				if (err) {
-					fiber.throwInto(err);
-				} else {
-					fiber.run(res);
+			process.nextTick(() => {
+				let cx = globals.context;
+				try {
+					if (err) {
+						fiber.throwInto(err);
+					} else {
+						fiber.run(res);
+					}
+				} finally {
+					globals.context = cx;
+					cx = null;
 				}
-			} finally {
-				globals.context = cx;
-				cx = null;
-			}
+			});
 		});
 	} else {
 		promiseOrCallback.then(res => {
@@ -103,24 +105,24 @@ export let run = <T>(fn: () => T): Promise<T> => {
 /// The funnel can be closed with `fun.close()`.  
 /// When a funnel is closed, the operations that are still in the funnel will continue but their callbacks
 /// won't be called, and no other operation will enter the funnel.
-export function funnel<T = void>(max = -1): Funnel<T> {
+export function funnel(max = -1): Funnel {
 	if (typeof max !== 'number') {
 		throw new Error('bad max number: ' + max);
 	}
 
 	const _max = (max === 0) ? exports.funnel.defaultSize : max;
-	
+
 	// Each bottled coroutine use an handshake to be waked up later when an other quit.
 	// Before waiting on the handshake, it is pushed to this queue.
 	let queue: Handshake[] = [];
 	let active = 0;
 	let closed = false;
 
-	function tryEnter(fn: () => T) {
+	function tryEnter<T>(fn: () => T): T | undefined {
 		if (active < _max) {
 			active++;
 			try {
-				fn();
+				return fn();
 			} finally {
 				active--;
 				const hk = queue.shift();
@@ -129,11 +131,11 @@ export function funnel<T = void>(max = -1): Funnel<T> {
 				}
 			}
 		} else {
-			overflow(fn);
+			return overflow<T>(fn);
 		}
 	}
 
-	function overflow(fn: () => T) {
+	function overflow<T>(fn: () => T): T | undefined {
 		const hk = handshake();
 		queue.push(hk);
 		hk.wait();
@@ -142,10 +144,10 @@ export function funnel<T = void>(max = -1): Funnel<T> {
 		}
 		// A success is not sure, the entry ticket may have already be taken by another,
 		// so this one may still be delayed by re-entering in overflow().
-		tryEnter(fn);
+		return tryEnter<T>(fn);
 	}
 
-	const fun = function(fn: () => T) {
+	const fun = function <T>(fn: () => T): T | undefined {
 		if (closed) {
 			return;
 		}
@@ -153,8 +155,8 @@ export function funnel<T = void>(max = -1): Funnel<T> {
 			return fn();
 		}
 		return tryEnter(fn);
-	} as Funnel<T>;
-	
+	} as Funnel;
+
 	fun.close = () => {
 		queue.forEach(hk => {
 			hk.notify();
@@ -166,8 +168,8 @@ export function funnel<T = void>(max = -1): Funnel<T> {
 }
 (funnel as any).defaultSize = 4;
 
-export interface Funnel<T = void> {
-	(fn: () => T): T;
+export interface Funnel {
+	<T>(fn: () => T): T | undefined;
 	close(): void;
 }
 
@@ -404,7 +406,7 @@ if (process.env.FPROMISE_STACK_TRACES === 'whole') {
 			get: function() {
 				const localStack = localError ? localError.stack || '' : '';
 				return (fiberStack + '\n' + localStack.split('\n').slice(1).filter(line => {
-					return !/\bf-promise\/build\/src\/\b/.test(line);
+					return !/\/f-promise\//.test(line);
 				}).join('\n'));
 			},
 			enumerable: true,
@@ -420,7 +422,7 @@ if (process.env.FPROMISE_STACK_TRACES === 'whole') {
 		Object.defineProperty(e, 'stack', {
 			get: function() {
 				return fiberStack.split('\n').filter(line => {
-					return !/\bf-promise\/build\/src\/\b/.test(line);
+					return !/\/f-promise\//.test(line);
 				}).join('\n');
 			},
 			enumerable: true,

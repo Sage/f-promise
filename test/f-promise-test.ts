@@ -21,6 +21,10 @@ function delay<T>(val: T, millis?: number) {
 	});
 }
 
+function sum(array: (number | undefined)[]): number {
+	return array.reduce<number>((sum, x) => sum + (x || 0), 0);
+}
+
 describe('wait', () => {
 	it('promise wait with success', done => {
 		const p = run(() => {
@@ -77,6 +81,15 @@ describe('wait', () => {
 		}, e => {
 			done();
 		});
+	});
+	it('wait into a callback wait', done => {
+		const p = run(() => {
+			wait(cb => {
+				wait(_cb => process.nextTick(_cb));
+				cb(null, null);
+			});
+		});
+		p.then(done, done);
 	});
 });
 
@@ -169,41 +182,41 @@ describe('funnel', () => {
 	test('less concurrency than allowed', () => {
 		const fun = funnel(4);
 		const begin = Date.now();
-		map([10, 10], timeToSleep => {
-			fun(() => {
+		const results = map<number, number | undefined>([10, 10], timeToSleep => {
+			return fun<number>(() => {
 				sleep(timeToSleep);
+				return 1;
 			});
 		});
+		equal(sum(results), 2);
 		closeTo(Date.now() - begin, 10, 4);
 	});
 	test('more concurrency than allowed', () => {
 		const fun = funnel(2);
 		const begin = Date.now();
-		map([10, 10, 10, 10], timeToSleep => {
-			fun(() => {
+		const results = map<number, number | undefined>([10, 10, 10, 10], timeToSleep => {
+			return fun<number>(() => {
 				sleep(timeToSleep);
+				return 1;
 			});
 		});
+		equal(sum(results), 4);
 		closeTo(Date.now() - begin, 20, 4);
 	});
 	test('close funnel access', () => {
 		const fun = funnel(1);
 		const begin = Date.now();
-		let counterInside = 0;
-		let counterOutside = 0;
 		run(() => {
 			sleep(15);
 			fun.close();
 		});
-		map([10, 10, 10, 10], timeToSleep => {
-			fun(() => {
+		const results = map<number, number | undefined>([10, 10, 10, 10], timeToSleep => {
+			return fun<number>(() => {
 				sleep(timeToSleep);
-				counterInside++;
+				return 1;
 			});
-			counterOutside++;
 		});
-		equal(counterInside, 2);
-		equal(counterOutside, 4);
+		equal(sum(results), 2);
 		closeTo(Date.now() - begin, 20, 4);
 	});
 });

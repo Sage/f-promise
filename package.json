@@ -37,7 +37,7 @@
   },
   "scripts": {
     "prepare": "rm -rf build && tsc && tsc --target ES2015 --module commonjs --outDir build examples/disk-usage-async-await.ts",
-    "test": "_mocha build/test",
+    "test": "mocha build/test",
     "lint": "tslint -e 'node_modules/**' -p ."
   }
 }
