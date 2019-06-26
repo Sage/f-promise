@@ -37,7 +37,7 @@ function printDiskUsage(dir) {
 }
 
 run(() => printDiskUsage(process.cwd()))
-    .then(() => {}, err => { throw err; });
+    .then(() => {}, err => { console.error(err); });
 ```
 
 Note: this is not a very efficient implementation because the logic is completely
@@ -67,7 +67,7 @@ async function printDiskUsage(dir) {
 }
 
 printDiskUsage(process.cwd())
-    .then(() => {}, err => { throw err; });
+    .then(() => {}, err => { console.error(err); });
 ```
 
 Two observations:
@@ -161,7 +161,7 @@ won't be called, and no other operation will enter the funnel.
   `array = q.contents()`: returns a copy of the queue's contents.  
   `q.adjust(fn[, thisObj])`: adjusts the contents of the queue by calling `newContents = fn(oldContents)`.  
   `q.length`: number of items currently in the queue.  
-
+ 
 ### CLS (Continuation Local Storage)
 
 * `cx = fpromise.context()`  
@@ -171,6 +171,33 @@ won't be called, and no other operation will enter the funnel.
   wraps a function so that it executes with context `cx` (or a wrapper around current context if `cx` is falsy).
   The previous context will be restored when the function returns (or throws).  
   returns the wrapped function.
+
+### Miscellaneous
+
+* `results = fpromise.map(collection, fn)`  
+  creates as many coroutines with `fn` as items in `collection` and wait for them to finish to return result array.
+ 
+* `fpromise.sleep(ms)`  
+  suspends current coroutine for `ms` milliseconds.
+ 
+* `ok = fpromise.canWait()`  
+  returns whether `wait` calls are allowed (whether we are called from a `run`).
+    
+* `wrapped = fpromise.eventHandler(handler)`  
+  wraps `handler` so that it can call `wait`.  
+  the wrapped handler will execute on the current fiber if canWait() is true.
+  otherwise it will be `run` on a new fiber (without waiting for its completion)  
+  
+### Error stack traces
+
+Three policies available for error stack trace handling:
+* `fast`: stack traces are not changed. Call history might be difficult to read; cost less.
+* `whole`: stack traces due to async tasks errors in `wait()` are concatenate with the current coroutine stack.
+  This allow to have a complete history call (including f-promise traces).
+* default: stack traces are like `whole` policy, but clean up to remove f-promise noise.
+
+The policy can be set with `FPROMISE_STACK_TRACES` environment variable.
+Any value other than `fast` and `whole` are consider as default policy. 
 
 ## Related projects
 
