@@ -10,10 +10,10 @@
   "main": "build/index.js",
   "typings": "build/index.d.ts",
   "engines": {
-    "node": ">=4.0.0"
+    "node": ">=6.0.0"
   },
   "dependencies": {
-    "fibers": "^3.0.0"
+    "fibers": "^4.0.0"
   },
   "devDependencies": {
     "@types/chai": "^3.4.34",
