@@ -222,7 +222,7 @@ describe('funnel', () => {
             });
         });
         equal(sum(results), 4);
-        closeTo(Date.now() - begin, 20, 4);
+        closeTo(Date.now() - begin, 20, 8);
     });
     test('close funnel access', () => {
         const fun = funnel(1);
@@ -238,7 +238,7 @@ describe('funnel', () => {
             });
         });
         equal(sum(results), 2);
-        closeTo(Date.now() - begin, 20, 4);
+        closeTo(Date.now() - begin, 20, 8);
     });
 });
 
