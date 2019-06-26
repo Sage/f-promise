@@ -69,7 +69,7 @@ export let run = <T>(fn: () => T): Promise<T> => {
 	}
 	return new Promise((resolve, reject) => {
 		const cx = globals.context;
-		const res = fibers(() => {
+		fibers(() => {
 			try {
 				resolve(fn());
 			} catch (e) {
@@ -83,26 +83,26 @@ export let run = <T>(fn: () => T): Promise<T> => {
 // goodies
 
 /// ## funnel
-/// * `fun = funnel(max)`  
+/// * `fun = funnel(max)`
 ///   limits the number of concurrent executions of a given code block.
-/// 
+///
 /// The `funnel` function is typically used with the following pattern:
-/// 
+///
 /// ``` ts
 /// // somewhere
 /// var myFunnel = funnel(10); // create a funnel that only allows 10 concurrent executions.
-/// 
+///
 /// // elsewhere
 /// myFunnel(function() { /* code with at most 10 concurrent executions */ });
 /// ```
-/// 
+///
 /// The `funnel` function can also be used to implement critical sections. Just set funnel's `max` parameter to 1.
-/// 
-/// If `max` is set to 0, a default number of parallel executions is allowed. 
-/// This default number can be read and set via `flows.funnel.defaultSize`.  
+///
+/// If `max` is set to 0, a default number of parallel executions is allowed.
+/// This default number can be read and set via `flows.funnel.defaultSize`.
 /// If `max` is negative, the funnel does not limit the level of parallelism.
-/// 
-/// The funnel can be closed with `fun.close()`.  
+///
+/// The funnel can be closed with `fun.close()`.
 /// When a funnel is closed, the operations that are still in the funnel will continue but their callbacks
 /// won't be called, and no other operation will enter the funnel.
 export function funnel(max = -1): Funnel {
@@ -173,13 +173,13 @@ export interface Funnel {
 	close(): void;
 }
 
-/// 
+///
 /// ## handshake and queue
-/// * `hs = handshake()`  
-///   allocates a simple semaphore that can be used to do simple handshakes between two tasks.  
-///   The returned handshake object has two methods:  
-///   `hs.wait()`: waits until `hs` is notified.  
-///   `hs.notify()`: notifies `hs`.  
+/// * `hs = handshake()`
+///   allocates a simple semaphore that can be used to do simple handshakes between two tasks.
+///   The returned handshake object has two methods:
+///   `hs.wait()`: waits until `hs` is notified.
+///   `hs.notify()`: notifies `hs`.
 ///   Note: `wait` calls are not queued. An exception is thrown if wait is called while another `wait` is pending.
 export function handshake<T = void>() {
 	let callback: Callback<T> | undefined = undefined, notified = false;
@@ -205,11 +205,11 @@ export interface Handshake<T = void> {
 	notify(): void;
 }
 
-/// * `q = new Queue(options)`  
-///   allocates a queue which may be used to send data asynchronously between two tasks.  
-///   The `max` option can be set to control the maximum queue length.  
+/// * `q = new Queue(options)`
+///   allocates a queue which may be used to send data asynchronously between two tasks.
+///   The `max` option can be set to control the maximum queue length.
 ///   When `max` has been reached `q.put(data)` discards data and returns false.
-///   The returned queue has the following methods:  
+///   The returned queue has the following methods:
 export interface QueueOptions {
 	max?: number;
 }
@@ -249,7 +249,7 @@ export class Queue<T> {
 			}
 		});
 	}
-	///   `q.write(data)`:  queues an item. Waits if the queue is full.  
+	///   `q.write(data)`:  queues an item. Waits if the queue is full.
 	write(item: T | undefined) {
 		return wait<T>((cb: Callback<T>) => {
 			if (this.put(item)) {
@@ -262,7 +262,7 @@ export class Queue<T> {
 
 		});
 	}
-	///   `ok = q.put(data)`: queues an item synchronously. Returns true if the queue accepted it, false otherwise. 
+	///   `ok = q.put(data)`: queues an item synchronously. Returns true if the queue accepted it, false otherwise.
 	put(item: T | undefined, force?: boolean) {
 		if (!this._callback) {
 			if (this._max >= 0 && this._q.length >= this._max && !force) return false;
@@ -276,19 +276,19 @@ export class Queue<T> {
 		}
 		return true;
 	}
-	///   `q.end()`: ends the queue. This is the synchronous equivalent of `q.write(_, undefined)`  
+	///   `q.end()`: ends the queue. This is the synchronous equivalent of `q.write(_, undefined)`
 	end() {
 		this.put(undefined, true);
 	}
-	///   `data = q.peek()`: returns the first item, without dequeuing it. Returns `undefined` if the queue is empty.  
+	///   `data = q.peek()`: returns the first item, without dequeuing it. Returns `undefined` if the queue is empty.
 	peek() {
 		return this._q[0];
 	}
-	///   `array = q.contents()`: returns a copy of the queue's contents.  
+	///   `array = q.contents()`: returns a copy of the queue's contents.
 	contents() {
 		return this._q.slice(0);
 	}
-	///   `q.adjust(fn[, thisObj])`: adjusts the contents of the queue by calling `newContents = fn(oldContents)`.  
+	///   `q.adjust(fn[, thisObj])`: adjusts the contents of the queue by calling `newContents = fn(oldContents)`.
 	adjust(fn: (old: (T | undefined)[]) => (T | undefined)[]) {
 		const nq = fn.call(null, this._q);
 		if (!Array.isArray(nq)) throw new Error('adjust function does not return array');
@@ -297,12 +297,12 @@ export class Queue<T> {
 	get length() { return this._q.length; }
 }
 
-/// 
+///
 /// ## Continuation local storage (CLS)
-/// 
-/// * `result = withContext(fn, cx)`  
+///
+/// * `result = withContext(fn, cx)`
 ///   wraps a function so that it executes with context `cx` (or a wrapper around current context if `cx` is falsy).
-///   The previous context will be restored when the function returns (or throws).  
+///   The previous context will be restored when the function returns (or throws).
 ///   returns the wrapped function.
 export function withContext<T>(fn: () => T, cx: any): T {
 	if (!fibers.current) throw new Error('withContext(fn) not allowed outside run()');
@@ -319,9 +319,9 @@ export function context<T = any>(): T {
 	return globals.context;
 }
 
-/// 
+///
 /// ## Miscellaneous
-/// 
+///
 /// * `results = map(collection, fn)`
 ///   creates as many coroutines with `fn` as items in `collection` and wait for them to finish to return result array.
 export function map<T, R>(collection: T[], fn: (val: T) => R) {
@@ -336,16 +336,16 @@ export function sleep(n: number): void {
 	wait(cb => setTimeout(cb, n));
 }
 
-/// * `ok = canWait()`  
+/// * `ok = canWait()`
 ///   returns whether `wait` calls are allowed (whether we are called from a `run`).
 export function canWait() {
 	return !!fibers.current;
 }
 
-/// * `wrapped = eventHandler(handler)`  
-///   wraps `handler` so that it can call `wait`.  
+/// * `wrapped = eventHandler(handler)`
+///   wraps `handler` so that it can call `wait`.
 ///   the wrapped handler will execute on the current fiber if canWait() is true.
-///   otherwise it will be `run` on a new fiber (without waiting for its completion)  
+///   otherwise it will be `run` on a new fiber (without waiting for its completion)
 export function eventHandler<T extends Function>(handler: T): T {
 	const wrapped = function(this: any, ...args: any[]) {
 		if (canWait()) handler.apply(this, args);
@@ -373,9 +373,9 @@ let cleanFiberStack: ((e: Error) => Error) | undefined;
 /// * `whole`: stack traces due to async tasks errors in `wait()` are concatenate with the current coroutine stack.
 ///   This allow to have a complete history call (including f-promise traces).
 /// * default: stack traces are like `whole` policy, but clean up to remove f-promise noise.
-/// 
+///
 /// The policy can be set with `FPROMISE_STACK_TRACES` environment variable.
-/// Any value other than `fast` and `whole` are consider as default policy. 
+/// Any value other than `fast` and `whole` are consider as default policy.
 if (process.env.FPROMISE_STACK_TRACES === 'whole') {
 
 	fullStackError = function fullStackError(e: Error) {
@@ -437,7 +437,7 @@ if (process.env.FPROMISE_STACK_TRACES === 'whole') {
 // So we monkey patch wait to throw an exception if it detects this special situation.
 if (process.execArgv.find(str => str.startsWith('--inspect-brk'))) {
 	// Unfortunately, there is no public API to check if we are called from a breakpoint.
-	// There is a C++ API (context->IsDebugEvaluateContext()) to test this 
+	// There is a C++ API (context->IsDebugEvaluateContext()) to test this
 	// but unfortunately this is an internal V8 API.
 	// This test is the best workaround I have found.
 	const isDebugEval = () => (new Error().stack || '').indexOf('.remoteFunction (<anonymous>') >= 0;
@@ -455,18 +455,24 @@ if (process.execArgv.find(str => str.startsWith('--inspect-brk'))) {
 		}
 	};
 
+	// Why throw string (from bjouhier)
+	// I think I threw a string rather than an Error object because
+	// I did not want to clutter the debugger with error objects.
+	// There was also a memory issue here: debugger allocating a lot
+	// of Error objects and stack trace captures vs. a string literal
+	// which does not require any dynamic memory allocation.
 	wait = <T>(arg: Promise<T> | Thunk<T>): T => {
 		if (isDebugEval()) {
 			if (!fibers.current.delayed) fibers.current.delayed = [];
 			fibers.current.delayed.push(arg);
-			throw new Error('would yield');
+			throw 'would yield';
 		}
 		flushDelayed();
 		return oldWait(arg);
 	};
 	const oldRun = run;
 	run = <T>(fn: () => T): Promise<T> => {
-		if (isDebugEval()) throw new Error('would start a fiber');
+		if (isDebugEval()) throw 'would start a fiber';
 		else return oldRun(fn);
 	};
 	console.log('Running with f-promise debugger hooks');

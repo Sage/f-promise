@@ -163,15 +163,15 @@ describe('handshake', () => {
 	test('multiple wait fails', () => {
 		const hk = handshake();
 		let thrown = false;
-		function runAntWait() {
+		function runAndWait() {
 			run(() => {
 				hk.wait();
 			}).catch(e => {
 				thrown = true;
 			});
 		}
-		runAntWait();
-		runAntWait();
+		runAndWait();
+		runAndWait();
 		sleep(10);
 		hk.notify(); // release not thrown run
 		equal(thrown, true);
