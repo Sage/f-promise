@@ -172,7 +172,7 @@ export function funnel(max = -1): Funnel {
 (funnel as any).defaultSize = 4;
 
 export interface Funnel {
-    <T>(fn: () => T): T | undefined;
+    <T>(fn: () => T): T;
     close(): void;
 }
 
