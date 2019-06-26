@@ -17,6 +17,7 @@ export type Thunk<T> = (cb: Callback<T>) => void;
 ///     As many `wait()` as needed may be used in a run.
 export let wait = <T = any>(promiseOrCallback: Promise<T> | Thunk<T>): T => {
     const fiber = fibers.current;
+    if (!fiber) throw new Error('cannot wait: no fiber');
     if (typeof promiseOrCallback === 'function') {
         promiseOrCallback((err, res) => {
             process.nextTick(() => {

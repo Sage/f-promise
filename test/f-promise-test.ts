@@ -112,6 +112,10 @@ describe('wait', () => {
         });
         p.then(done, done);
     });
+    it('wait throws without run', done => {
+        throws(() => wait(_cb => process.nextTick(_cb)), 'cannot wait: no fiber');
+        done();
+    });
 });
 
 describe('queue', () => {
