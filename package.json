@@ -1,6 +1,6 @@
 {
   "name": "f-promise",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "license": "MIT",
   "description": "Promise-oriented coroutines for node.js",
   "author": {
@@ -23,6 +23,7 @@
     "chai": "^4.1.2",
     "mocha": "^5.2.0",
     "mz": "^2.7.0",
+    "tslint": "^5.18.0",
     "typescript": "^2.9.2"
   },
   "keywords": [

@@ -8,10 +8,7 @@
         "prefer-for-of": true,
         // Functionality rules
         "await-promise": true,
-        "curly": [
-            true,
-            "ignore-same-line"
-        ],
+        "curly": [true, "ignore-same-line"],
         "label-position": true,
         "no-arg": true,
         "no-construct": true,
@@ -29,28 +26,14 @@
         "no-sparse-arrays": true,
         "no-string-throw": true,
         "no-unsafe-finally": true,
-        "no-unused-expression": [
-            true,
-            "allow-fast-null-checks"
-        ],
+        "no-unused-expression": [true, "allow-fast-null-checks"],
         "no-var-keyword": true,
         "prefer-object-spread": true,
-        "triple-equals": [
-            true,
-            "allow-null-check"
-        ],
-        "typeof-compare": true,
+        "triple-equals": [true, "allow-null-check"],
         "use-isnan": true,
         // Maintainability rules
-        "indent": [
-            true,
-            "tabs",
-            4
-        ],
-        "max-line-length": [
-            true,
-            200
-        ],
+        "indent": [true, "spaces", 4],
+        "max-line-length": [true, 200],
         "prefer-const": true,
         // Style rules
         "trailing-comma": [
@@ -60,10 +43,7 @@
                 "singleline": "never"
             }
         ],
-        "arrow-parens": [
-            true,
-            "ban-single-arg-parens"
-        ],
+        "arrow-parens": [true, "ban-single-arg-parens"],
         "arrow-return-shorthand": true,
         "class-name": true,
         "encoding": true,
@@ -72,23 +52,9 @@
         "no-consecutive-blank-lines": true,
         "no-irregular-whitespace": true,
         "no-unnecessary-callback-wrapper": true,
-        "ordered-imports": [
-            true
-        ],
-        "quotemark": [
-            true,
-            "single",
-            "avoid-escape"
-        ],
-        "semicolon": [
-            true,
-            "always"
-        ],
-        "variable-name": [
-            true,
-            "check-format",
-            "ban-keywords",
-            "allow-leading-underscore"
-        ]
+        "ordered-imports": [true],
+        "quotemark": [true, "single", "avoid-escape"],
+        "semicolon": [true, "always"],
+        "variable-name": [true, "check-format", "ban-keywords", "allow-leading-underscore"]
     }
 }
