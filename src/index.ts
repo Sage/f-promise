@@ -355,11 +355,13 @@ export function canWait() {
 ///   otherwise it will be `run` on a new fiber (without waiting for its completion)
 export function eventHandler<T extends Function>(handler: T): T {
     const wrapped = function(this: any, ...args: any[]) {
-        if (canWait()) handler.apply(this, args);
-        else
+        if (canWait()) {
+            handler.apply(this, args);
+        } else {
             run(() => withContext(() => handler.apply(this, args), {})).catch(err => {
                 console.error(err);
             });
+        }
     } as any;
     // preserve arity
     Object.defineProperty(wrapped, 'length', { value: handler.length });
@@ -485,6 +487,7 @@ if (process.execArgv.find(str => str.startsWith('--inspect-brk'))) {
         if (isDebugEval()) {
             if (!fibers.current.delayed) fibers.current.delayed = [];
             fibers.current.delayed.push(arg);
+            // tslint:disable-next-line:no-string-throw
             throw 'would yield';
         }
         flushDelayed();
@@ -492,6 +495,7 @@ if (process.execArgv.find(str => str.startsWith('--inspect-brk'))) {
     };
     const oldRun = run;
     run = <T>(fn: () => T): Promise<T> => {
+        // tslint:disable-next-line:no-string-throw
         if (isDebugEval()) throw 'would start a fiber';
         else return oldRun(fn);
     };
