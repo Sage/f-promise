@@ -36,9 +36,21 @@ function delay<T>(val: T, millis?: number) {
     });
 }
 
+function delayFail<T>(reason: any, millis?: number) {
+    return wait<T>(cb => {
+        setTimeout(() => {
+            cb(new Error(`reason: ${reason}`));
+        }, millis || 0);
+    });
+}
+
 function sum(array: (number | undefined)[]): number {
     return array.reduce<number>((sum, x) => sum + (x || 0), 0);
 }
+
+process.on('unhandledRejection', err => {
+    fail(`Unhandled rejected promise: ${err.stack}`);
+});
 
 describe('wait', () => {
     it('promise wait with success', done => {
@@ -235,11 +247,16 @@ describe('funnel', () => {
             sleep(15);
             fun.close();
         });
-        const results = map<number, number | undefined>([10, 10, 10, 10], timeToSleep => {
-            return fun<number>(() => {
-                sleep(timeToSleep);
-                return 1;
-            });
+        const results = map<number, number>([10, 10, 10, 10], timeToSleep => {
+            try {
+                return fun<number>(() => {
+                    sleep(timeToSleep);
+                    return 1;
+                });
+            } catch (err) {
+                equal(err.message, 'cannot execute: funnel has been closed');
+                return 0;
+            }
         });
         equal(sum(results), 2);
         closeTo(Date.now() - begin, 20, 8);
@@ -292,6 +309,18 @@ describe('collection functions', () => {
             equal(result, 'success');
             done();
         }, done);
+    });
+
+    it('map with error', done => {
+        run(() => {
+            map([2, 5], delayFail);
+            fail();
+        })
+            .then(_ => fail())
+            .catch(err => {
+                equal(err.message, 'reason: 2');
+                done();
+            });
     });
 });
 
