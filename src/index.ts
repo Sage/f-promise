@@ -121,7 +121,7 @@ export function funnel(max = -1): Funnel {
     let active = 0;
     let closed = false;
 
-    function tryEnter<T>(fn: () => T): T | undefined {
+    function tryEnter<T>(fn: () => T): T {
         if (active < _max) {
             active++;
             try {
@@ -138,21 +138,21 @@ export function funnel(max = -1): Funnel {
         }
     }
 
-    function overflow<T>(fn: () => T): T | undefined {
+    function overflow<T>(fn: () => T): T {
         const hk = handshake();
         queue.push(hk);
         hk.wait();
         if (closed) {
-            return;
+            throw new Error(`cannot execute: funnel has been closed`);
         }
         // A success is not sure, the entry ticket may have already be taken by another,
         // so this one may still be delayed by re-entering in overflow().
         return tryEnter<T>(fn);
     }
 
-    const fun = function<T>(fn: () => T): T | undefined {
+    const fun = function<T>(fn: () => T): T {
         if (closed) {
-            return;
+            throw new Error(`cannot execute: funnel has been closed`);
         }
         if (_max < 0 || _max === Infinity) {
             return fn();
@@ -330,11 +330,13 @@ export function context<T = any>(): T {
 /// * `results = map(collection, fn)`
 ///   creates as many coroutines with `fn` as items in `collection` and wait for them to finish to return result array.
 export function map<T, R>(collection: T[], fn: (val: T) => R) {
-    return collection
-        .map(item => {
-            return run(() => fn(item));
-        })
-        .map(wait);
+    return wait(
+        Promise.all(
+            collection.map(item => {
+                return run(() => fn(item));
+            }),
+        ),
+    );
 }
 
 /// * `sleep(ms)`
