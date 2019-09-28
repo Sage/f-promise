@@ -380,6 +380,22 @@ const globals = (global[secret] = global[secret] || { context: {} });
 let fullStackError: ((e: Error) => Error) | undefined;
 let cleanFiberStack: ((e: Error) => Error) | undefined;
 
+let cannotOverrideStackWarned = false;
+function overrideStack(e: Error, getFn: (this: Error) => string) {
+    try {
+        Object.defineProperty(e, 'stack', {
+            get: getFn,
+            enumerable: true,
+            configurable: true,
+        });
+    } catch (e) {
+        if (!cannotOverrideStackWarned) {
+            console.warn(`[F-PROMISE]: attempt to override e.stack failed (warning will not be repeated)`);
+            cannotOverrideStackWarned = true;
+        }
+    }
+}
+
 /// ## Error stack traces
 ///
 /// Three policies:
@@ -397,12 +413,9 @@ if (process.env.FPROMISE_STACK_TRACES === 'whole') {
         }
         const localError = new Error('__fpromise');
         const fiberStack = e.stack || '';
-        Object.defineProperty(e, 'stack', {
-            get: function() {
-                const localStack = localError ? localError.stack || '' : '';
-                return fiberStack + localStack;
-            },
-            enumerable: true,
+        overrideStack(e, function() {
+            const localStack = localError ? localError.stack || '' : '';
+            return fiberStack + localStack;
         });
         return e;
     };
@@ -413,22 +426,19 @@ if (process.env.FPROMISE_STACK_TRACES === 'whole') {
         }
         const localError = new Error('__f-promise');
         const fiberStack = e.stack || '';
-        Object.defineProperty(e, 'stack', {
-            get: function() {
-                const localStack = localError ? localError.stack || '' : '';
-                return (
-                    fiberStack +
-                    '\n' +
-                    localStack
-                        .split('\n')
-                        .slice(1)
-                        .filter(line => {
-                            return !/\/f-promise\//.test(line);
-                        })
-                        .join('\n')
-                );
-            },
-            enumerable: true,
+        overrideStack(e, function() {
+            const localStack = localError ? localError.stack || '' : '';
+            return (
+                fiberStack +
+                '\n' +
+                localStack
+                    .split('\n')
+                    .slice(1)
+                    .filter(line => {
+                        return !/\/f-promise\//.test(line);
+                    })
+                    .join('\n')
+            );
         });
         return e;
     };
@@ -438,16 +448,13 @@ if (process.env.FPROMISE_STACK_TRACES === 'whole') {
             return e;
         }
         const fiberStack = e.stack || '';
-        Object.defineProperty(e, 'stack', {
-            get: function() {
-                return fiberStack
-                    .split('\n')
-                    .filter(line => {
-                        return !/\/f-promise\//.test(line);
-                    })
-                    .join('\n');
-            },
-            enumerable: true,
+        overrideStack(e, function() {
+            return fiberStack
+                .split('\n')
+                .filter(line => {
+                    return !/\/f-promise\//.test(line);
+                })
+                .join('\n');
         });
         return e;
     };
