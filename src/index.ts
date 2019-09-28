@@ -390,7 +390,7 @@ function overrideStack(e: Error, getFn: (this: Error) => string) {
         });
     } catch (e) {
         if (!cannotOverrideStackWarned) {
-            console.warn(`[F-PROMISE]: attempt to override e.stack failed (warning will not be repeated)`);
+            console.warn(`[F-PROMISE] attempt to override e.stack failed (warning will not be repeated)`);
             cannotOverrideStackWarned = true;
         }
     }
