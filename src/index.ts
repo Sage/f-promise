@@ -390,21 +390,9 @@ let cleanFiberStack: ((e: Error) => Error) | undefined;
 ///
 /// The policy can be set with `FPROMISE_STACK_TRACES` environment variable.
 /// Any value other than `fast` and `whole` are consider as default policy.
-let canOverrideStack = true;
-try {
-    Object.defineProperty(new Error(), 'stack', {
-        get() {
-            return '';
-        },
-        enumerable: true,
-    });
-} catch (err) {
-    canOverrideStack = false;
-}
-
 if (process.env.FPROMISE_STACK_TRACES === 'whole') {
     fullStackError = function fullStackError(e: Error) {
-        if (!(canOverrideStack && e instanceof Error)) {
+        if (!(e instanceof Error)) {
             return e;
         }
         const localError = new Error('__fpromise');
@@ -420,7 +408,7 @@ if (process.env.FPROMISE_STACK_TRACES === 'whole') {
     };
 } else if (process.env.FPROMISE_STACK_TRACES !== 'fast') {
     fullStackError = function fullStackError(e: Error) {
-        if (!(canOverrideStack && e instanceof Error)) {
+        if (!(e instanceof Error)) {
             return e;
         }
         const localError = new Error('__f-promise');
@@ -446,7 +434,7 @@ if (process.env.FPROMISE_STACK_TRACES === 'whole') {
     };
 
     cleanFiberStack = function cleanFiberStack(e: Error) {
-        if (!(canOverrideStack && e instanceof Error)) {
+        if (!(e instanceof Error)) {
             return e;
         }
         const fiberStack = e.stack || '';
