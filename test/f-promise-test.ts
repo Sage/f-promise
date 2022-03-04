@@ -169,6 +169,22 @@ describe('queue', () => {
         strictEqual(queue.read(), 9);
         strictEqual(queue.peek(), undefined);
     });
+
+    test('queue not allow concurrent read', () => {
+        const queue = new Queue<number>(2);
+
+        const consumer1 = run(() => {
+            strictEqual(queue.read(), 4);
+        });
+        const consumer2 = run<Error>(() => {
+            queue.read();
+            return new Error('test failed');
+        }).catch(e => e);
+        queue.write(4);
+
+        wait(consumer1);
+        assert.equal(wait(consumer2).message, 'already getting');
+    });
 });
 
 describe('handshake', () => {

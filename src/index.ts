@@ -232,6 +232,7 @@ export class Queue<T> {
         options = options || {};
         this._max = options.max != null ? options.max : -1;
     }
+    ///   `data = q.read()`:  dequeue and returns the first item. Waits if the queue is empty. Does not allow concurrent read.
     read() {
         return wait<T>((cb: Callback<T>) => {
             if (this._callback) throw new Error('already getting');
